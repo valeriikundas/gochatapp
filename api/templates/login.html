@@ -1,0 +1,69 @@
+<html>
+
+<head>
+    <!-- <link rel="stylesheet" href="https://cdn.jsDeliver.net/npm/@exampledev/new.css/new.min.css" /> -->
+    <!-- <link rel="stylesheet" href="https://unpkg.com/sakura.css/css/sakura.css" /> -->
+    <link rel="stylesheet"
+          href="https://unpkg.com/mvp.css" />
+    <script src="https://accounts.google.com/gsi/client"
+            onload="console.log('TODO: add onload function')">
+            </script>
+    <script>
+
+        const client = google.accounts.oauth2.initTokenClient({
+            client_id: '421242097440-b5b1m476g9l862j097o72r1jnkcsj3mq.apps.googleusercontent.com',
+            scope: 'https://www.googleapis.com/auth/calendar.readonly',
+            callback: (response) => {
+                console.log("response", response)
+            },
+        });
+    </script>
+
+    <script>
+        // const client = google.accounts.oauth2.initTokenClient({
+        //     client_id: 'YOUR_GOOGLE_CLIENT_ID',
+        //     scope: 'https://www.googleapis.com/auth/calendar.readonly',
+        //     callback: (tokenResponse) => {
+        //         if (tokenResponse && tokenResponse.access_token) {
+        //             gapi.client.setApiKey('YOUR_API_KEY');
+        //             gapi.client.load('calendar', 'v3', listUpcomingEvents);
+        //         }
+        //     },
+        // });
+
+        // function listUpcomingEvents() {
+        //     gapi.client.calendar.events.list(...);
+        // }
+    </script>
+</head>
+
+<body>
+    <div>
+        <button onclick="client.requestAccessToken();">Authorize me</button>
+    </div>
+
+    <div>
+        <div id="g_id_onload"
+             data-client_id="421242097440-b5b1m476g9l862j097o72r1jnkcsj3mq.apps.googleusercontent.com"
+             data-context="signin"
+             data-ux_mode="popup"
+             data-login_uri="https://4221-93-72-91-32.ngrok-free.app/login"
+             data-auto_prompt="false">
+        </div>
+        <div class="g_id_signin"
+             data-type="standard"
+             data-shape="pill"
+             data-theme="outline"
+             data-text="signin_with"
+             data-size="large"
+             data-logo_alignment="left">
+        </div>
+    </div>
+
+    <div>
+
+        <!-- todo: show user email and upcoming calendar events for logged in user -->
+    </div>
+</body>
+
+</html>
