@@ -121,6 +121,10 @@ func main() {
 		})
 	})
 
+	// in general writing a chat app
+	// write a signup in tdd fashion
+	
+
 	e.Run("0.0.0.0:8080")
 }
 
