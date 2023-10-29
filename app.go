@@ -1,12 +1,11 @@
 package main
 
 import (
-	"fmt"
-	"io"
-	"net/http"
-	"net/url"
+	"log"
 
-	"github.com/gin-gonic/gin"
+	"github.com/go-playground/validator/v10"
+	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/template/html/v2"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
@@ -14,32 +13,35 @@ import (
 type User struct {
 	*gorm.Model
 
-	Name  string `gorm:"uniqueIndex" binding:"required"`
-	Email string `gorm:"uniqueIndex" binding:"required"`
+	Name  string `gorm:"uniqueIndex" validate:"required"`
+	Email string `gorm:"uniqueIndex" validate:"required"`
+
+	Chats []Chat `gorm:"many2many:chat_members"`
 }
 
-func ErrorHandler(c *gin.Context) {
-	c.Next()
+type Chat struct {
+	*gorm.Model
 
-	for _, err := range c.Errors {
-		fmt.Println(err)
-	}
-
-	if len(c.Errors) > 0 {
-		c.IndentedJSON(http.StatusInternalServerError, gin.H{
-			"errors": c.Errors,
-		})
-	}
+	Members []User `gorm:"many2many:chat_members"`
 }
 
-type GoogleAuthResponse struct {
-	credential   string
-	g_csrf_token string
+// type GoogleAuthResponse struct {
+// 	credential   string
+// 	g_csrf_token string
+// }
+
+type GlobalErrorHandlerResponse struct {
+	Success bool   `json:"success"`
+	Message string `json:"message"`
+}
+
+type FieldError struct {
+	Field, Tag, Param string
 }
 
 func main() {
 
-	dsn := "host=0.0.0.0 port=5432 dbname=ginapp sslmode=disable TimeZone=Europe/Kiev"
+	dsn := "host=0.0.0.0 port=5432 dbname=chatapp sslmode=disable TimeZone=Europe/Kiev"
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
 		panic(err)
@@ -50,89 +52,131 @@ func main() {
 		panic(err)
 	}
 
-	e := gin.Default()
+	htmlEngine := html.New("templates/", ".html")
 
-	e.Use(ErrorHandler)
-
-	e.LoadHTMLGlob("./templates/*")
-
-	e.GET("", func(c *gin.Context) {
-		c.HTML(http.StatusOK, "home.html", gin.H{})
+	app := fiber.New(fiber.Config{
+		Views: htmlEngine,
+		// Global custom error handler
+		ErrorHandler: func(c *fiber.Ctx, err error) error {
+			return c.Status(fiber.StatusBadRequest).JSON(GlobalErrorHandlerResponse{
+				Success: false,
+				Message: err.Error(),
+			})
+		},
 	})
 
-	e.GET("/ping", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{
-			"message": "pong",
+	app.Get("/", func(c *fiber.Ctx) error {
+		return c.Render("home", fiber.Map{
+			"a": "b",
 		})
 	})
 
-	e.GET("/users", func(c *gin.Context) {
+	// now: connected database, user table
+	// next:
+	// - setup testing
+	// - login signup methods
+
+	app.Get("/users", func(c *fiber.Ctx) error {
 		var users []User
 		tx := db.Find(&users)
+		log.Printf("%v\n", users)
 		if tx.Error != nil {
-			c.AbortWithError(http.StatusInternalServerError, tx.Error)
-			return
+			return tx.Error
 		}
-		c.IndentedJSON(http.StatusOK, users)
+		return c.Render("users", fiber.Map{
+			"Users": users,
+		})
 	})
 
-	e.POST("/user", func(c *gin.Context) {
+	app.Post("/user", func(c *fiber.Ctx) error {
 		var user User
-		if err := c.BindJSON(&user); err != nil {
-			return
+		err := c.BodyParser(&user)
+		if err != nil {
+			return err
+		}
+		validate := validator.New()
+		err = validate.Struct(user)
+		if err != nil {
+			var errors []FieldError
+			for _, err := range err.(validator.ValidationErrors) {
+				el := FieldError{
+					Field: err.Field(),
+					Tag:   err.Tag(),
+					Param: err.Param(),
+				}
+				errors = append(errors, el)
+			}
+			return c.Status(fiber.StatusBadRequest).JSON(errors)
 		}
 		tx := db.Create(&user)
 		if tx.Error != nil {
-			c.AbortWithError(http.StatusInternalServerError, tx.Error)
-			return
+			return tx.Error
 		}
-		c.IndentedJSON(http.StatusOK, user)
+		return c.JSON(user)
 	})
 
-	e.GET("/login", func(c *gin.Context) {
-		c.HTML(http.StatusOK, "login.html", gin.H{
-			"hello": "world",
+	app.Get("/api/chats", func(c *fiber.Ctx) error {
+		var chats []Chat
+		tx := db.Find(&chats)
+		if tx.Error != nil {
+			return tx.Error
+		}
+		return c.JSON(fiber.Map{
+			"chats": chats,
 		})
 	})
 
-	e.POST("/login", func(c *gin.Context) {
-		bytes, err := io.ReadAll(c.Request.Body)
-		if err != nil {
-			c.AbortWithError(http.StatusBadRequest, err)
-			return
+	app.Get("/chats", func(c *fiber.Ctx) error {
+		var chats []Chat
+		tx := db.Find(&chats)
+		if tx.Error != nil {
+			return tx.Error
 		}
-		data := string(bytes)
-		values, err := url.ParseQuery(data)
-		if err != nil {
-			c.AbortWithError(http.StatusBadRequest, err)
-		}
-		googleAuthResponse := GoogleAuthResponse{
-			credential:   values.Get("credential"),
-			g_csrf_token: values.Get("g_csrf_token"),
-		}
-		fmt.Printf("%v\n", googleAuthResponse)
-
-		c.IndentedJSON(http.StatusOK, gin.H{
-			"login": "success",
-			"data": map[string]string{
-				"credential":   googleAuthResponse.credential,
-				"g_csrf_token": googleAuthResponse.g_csrf_token,
-			},
+		return c.Render("chats", fiber.Map{
+			"chats": chats,
 		})
 	})
+
+	// TODO: generate random chats
+	// TODO: first test
+
+	// app.Get("/login", func(c *fiber.Ctx) {
+	// 	c.HTML(http.StatusOK, "lofiber.html", fiber.H{
+	// 		"hello": "world",
+	// 	})
+	// })
+
+	// app.Post("/login", func(c *fiber.Ctx) {
+	// 	bytes, err := io.ReadAll(c.Request.Body)
+	// 	if err != nil {
+	// 		c.AbortWithError(http.StatusBadRequest, err)
+	// 		return
+	// 	}
+	// 	data := string(bytes)
+	// 	values, err := url.ParseQuery(data)
+	// 	if err != nil {
+	// 		c.AbortWithError(http.StatusBadRequest, err)
+	// 	}
+	// 	googleAuthResponse := GoogleAuthResponse{
+	// 		credential:   values.Get("credential"),
+	// 		g_csrf_token: values.Get("g_csrf_token"),
+	// 	}
+	// 	fmt.Printf("%v\n", googleAuthResponse)
+
+	// 	c.IndentedJSON(http.StatusOK, fiber.H{
+	// 		"login": "success",
+	// 		"data": map[string]string{
+	// 			"credential":   googleAuthResponse.credential,
+	// 			"g_csrf_token": googleAuthResponse.g_csrf_token,
+	// 		},
+	// 	})
+	// })
 
 	// in general writing a chat app
 	// write a signup in tdd fashion
-	
 
-	e.Run("0.0.0.0:8080")
+	log.Fatal(app.Listen("0.0.0.0:8080"))
 }
 
 // todo:
-// google auth
-// apple auth
-// cognito auth
-// roles permissions
-// google pay
-// apple pay
-// stripe
+// add auth https://medium.com/@abhinavv.singh/a-comprehensive-guide-to-authentication-and-authorization-in-go-golang-6f783b4cea18

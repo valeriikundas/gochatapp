@@ -1,0 +1,18 @@
+<html>
+
+<head>
+    <link rel="stylesheet"
+          href="https://unpkg.com/mvp.css">
+</head>
+
+<body>
+    <div>
+        <ul>
+            {{range .Users}}
+            <li>{{.Name}} - {{.Email}}</li>
+            {{end}}
+        </ul>
+    </div>
+</body>
+
+</html>

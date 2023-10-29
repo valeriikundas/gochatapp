@@ -1,0 +1,18 @@
+<html>
+
+<body>
+    <div>
+        <ul>
+            {{range .Chats}}
+            <li>
+                {{.Name}} :
+                {{range .Members}}
+                ({{.Name}}, {{.Email}}),
+                {{end}}
+            </li>
+            {{end}}
+        </ul>
+    </div>
+</body>
+
+</html>
