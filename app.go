@@ -44,11 +44,13 @@ type FieldError struct {
 	Field, Tag, Param string
 }
 
+var db *gorm.DB
+
 func main() {
 	shouldGenerateChats := flag.Bool("generateChats", false, "generate chats?")
 	flag.Parse()
 
-	db := connectDatabase("chatapp")
+	db = connectDatabase("chatapp")
 
 	if *shouldGenerateChats {
 		err := generateRandomChats(nil, db)
@@ -80,6 +82,86 @@ type ChatsResponse struct {
 	Chats []Chat
 }
 
+func ChatsViewHandler(c *fiber.Ctx) error {
+	var chats []Chat
+	tx := db.Find(&chats)
+	if tx.Error != nil {
+		return tx.Error
+	}
+	return c.Render("chats", fiber.Map{
+		"chats": chats,
+	})
+}
+
+func HomeHandler(c *fiber.Ctx) error {
+	return c.Render("home", fiber.Map{
+		"a": "b",
+	})
+}
+
+func GetUsersHandler(c *fiber.Ctx) error {
+	var users []User
+	tx := db.Find(&users)
+	log.Printf("%v\n", users)
+	if tx.Error != nil {
+		return tx.Error
+	}
+	return c.Render("users", fiber.Map{
+		"Users": users,
+	})
+}
+
+func CreateUserHandler(c *fiber.Ctx) error {
+	var user User
+	err := c.BodyParser(&user)
+	if err != nil {
+		return err
+	}
+	validate := validator.New()
+	err = validate.Struct(user)
+	if err != nil {
+		var errors []FieldError
+		for _, err := range err.(validator.ValidationErrors) {
+			el := FieldError{
+				Field: err.Field(),
+				Tag:   err.Tag(),
+				Param: err.Param(),
+			}
+			errors = append(errors, el)
+		}
+		return c.Status(fiber.StatusBadRequest).JSON(errors)
+	}
+	tx := db.Create(&user)
+	if tx.Error != nil {
+		return tx.Error
+	}
+	return c.JSON(user)
+}
+
+func GetChatsHandler(c *fiber.Ctx) error {
+	var chats []Chat
+	tx := db.Model(&Chat{}).Preload("Members").Find(&chats)
+	if tx.Error != nil {
+		return tx.Error
+	}
+
+	data := ChatsResponse{
+		Chats: chats,
+	}
+	b := new(bytes.Buffer)
+	err := json.NewEncoder(b).Encode(data)
+	if err != nil {
+		return err
+	}
+
+	bytes, err := json.MarshalIndent(fiber.Map{"chats": chats}, "", "  ")
+	if err != nil {
+		return err
+	}
+
+	return c.SendString(string(bytes))
+}
+
 func createApp(db *gorm.DB) *fiber.App {
 	htmlEngine := html.New("templates/", ".html")
 
@@ -94,90 +176,12 @@ func createApp(db *gorm.DB) *fiber.App {
 		},
 	})
 
-	app.Get("/", func(c *fiber.Ctx) error {
-		return c.Render("home", fiber.Map{
-			"a": "b",
-		})
-	})
+	app.Get("/", HomeHandler)
+	app.Get("/users", GetUsersHandler)
+	app.Post("/user", CreateUserHandler)
+	app.Get("/api/chats", GetChatsHandler)
 
-	// now: connected database, user table
-	// next:
-	// - setup testing
-	// - login signup methods
-
-	app.Get("/users", func(c *fiber.Ctx) error {
-		var users []User
-		tx := db.Find(&users)
-		log.Printf("%v\n", users)
-		if tx.Error != nil {
-			return tx.Error
-		}
-		return c.Render("users", fiber.Map{
-			"Users": users,
-		})
-	})
-
-	app.Post("/user", func(c *fiber.Ctx) error {
-		var user User
-		err := c.BodyParser(&user)
-		if err != nil {
-			return err
-		}
-		validate := validator.New()
-		err = validate.Struct(user)
-		if err != nil {
-			var errors []FieldError
-			for _, err := range err.(validator.ValidationErrors) {
-				el := FieldError{
-					Field: err.Field(),
-					Tag:   err.Tag(),
-					Param: err.Param(),
-				}
-				errors = append(errors, el)
-			}
-			return c.Status(fiber.StatusBadRequest).JSON(errors)
-		}
-		tx := db.Create(&user)
-		if tx.Error != nil {
-			return tx.Error
-		}
-		return c.JSON(user)
-	})
-
-	app.Get("/api/chats", func(c *fiber.Ctx) error {
-		var chats []Chat
-		tx := db.Model(&Chat{}).Preload("Members").Find(&chats)
-		if tx.Error != nil {
-			return tx.Error
-		}
-
-		data := ChatsResponse{
-			Chats: chats,
-		}
-		b := new(bytes.Buffer)
-		err := json.NewEncoder(b).Encode(data)
-		if err != nil {
-			return err
-		}
-
-		bytes, err := json.MarshalIndent(fiber.Map{"chats": chats}, "", "  ")
-		if err != nil {
-			return err
-		}
-
-		return c.SendString(string(bytes))
-	})
-
-	app.Get("/chats", func(c *fiber.Ctx) error {
-		var chats []Chat
-		tx := db.Find(&chats)
-		if tx.Error != nil {
-			return tx.Error
-		}
-		return c.Render("chats", fiber.Map{
-			"chats": chats,
-		})
-	})
+	app.Get("/chats", ChatsViewHandler)
 
 	// app.Get("/login", func(c *fiber.Ctx) {
 	// 	c.HTML(http.StatusOK, "lofiber.html", fiber.H{
