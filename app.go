@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -50,7 +51,10 @@ func main() {
 	db := connectDatabase("chatapp")
 
 	if *shouldGenerateChats {
-		generateRandomChats(nil, db)
+		err := generateRandomChats(nil, db)
+		if err != nil {
+			log.Fatal(err)
+		}
 		return
 	}
 
@@ -70,6 +74,10 @@ func connectDatabase(dbName string) *gorm.DB {
 		panic(err)
 	}
 	return db
+}
+
+type ChatsResponse struct {
+	Chats []Chat
 }
 
 func createApp(db *gorm.DB) *fiber.App {
@@ -142,12 +150,22 @@ func createApp(db *gorm.DB) *fiber.App {
 		if tx.Error != nil {
 			return tx.Error
 		}
+
+		data := ChatsResponse{
+			Chats: chats,
+		}
+		b := new(bytes.Buffer)
+		err := json.NewEncoder(b).Encode(data)
+		if err != nil {
+			return err
+		}
+
 		bytes, err := json.MarshalIndent(fiber.Map{"chats": chats}, "", "  ")
 		if err != nil {
 			return err
 		}
-		return c.SendString(string(bytes))
 
+		return c.SendString(string(bytes))
 	})
 
 	app.Get("/chats", func(c *fiber.Ctx) error {

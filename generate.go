@@ -10,7 +10,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func generateRandomChats(t *testing.T, db *gorm.DB) {
+func generateRandomChats(t *testing.T, db *gorm.DB) error {
 	userData := make([]User, 100)
 	for i := 0; i < 100; i += 1 {
 		userData[i] = User{
@@ -19,13 +19,17 @@ func generateRandomChats(t *testing.T, db *gorm.DB) {
 		}
 	}
 	tx := db.CreateInBatches(userData, 10)
-	if t != nil {
+	if t == nil {
+		return tx.Error
+	} else {
 		utils.AssertEqual(t, nil, tx.Error)
 	}
 
 	var users []User
 	tx = db.Find(&users)
-	if t != nil {
+	if t == nil {
+		return tx.Error
+	} else {
 		utils.AssertEqual(t, int64(100), tx.RowsAffected)
 		utils.AssertEqual(t, nil, tx.Error)
 	}
@@ -44,9 +48,13 @@ func generateRandomChats(t *testing.T, db *gorm.DB) {
 		chatNames[i] = chatData[i].Name
 	}
 	tx = db.CreateInBatches(chatData, 10)
-	if t != nil {
+	if t == nil {
+		return tx.Error
+	} else {
 		utils.AssertEqual(t, nil, tx.Error)
 	}
+
+	return nil
 }
 
 func selectRandomUsers(users []User, cnt int) []User {

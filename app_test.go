@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"math"
@@ -41,12 +42,11 @@ func TestGetChats(t *testing.T) {
 	resp, err := app.Test(httptest.NewRequest(fiber.MethodGet, "/api/chats", nil))
 	utils.AssertEqual(t, nil, err)
 	utils.AssertEqual(t, fiber.StatusOK, resp.StatusCode)
-	var data []byte
-	n, err := resp.Body.Read(data)
-	utils.AssertEqual(t, nil, err)
-	utils.AssertEqual(t, 1, n)
 
-	log.Printf("%v\n", data)
+	var data ChatsResponse
+	err = json.NewDecoder(resp.Body).Decode(&data)
+	utils.AssertEqual(t, nil, err)
+	utils.AssertEqual(t, 100, len(data.Chats))
 }
 
 func prepareTestDb(t *testing.T) (db *gorm.DB, dropCmd *exec.Cmd) {
