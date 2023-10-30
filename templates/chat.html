@@ -1,0 +1,28 @@
+<h4>{{.Name}}</h4>
+
+{{if .Members}}
+<table>
+    {{range .Members}}
+    <tr>
+        <td>{{.Name}}</td>
+        <td>{{.Email}}</td>
+        <td>
+            <!-- TODO: implement profile photos uploading -->
+            {{if .AvatarURL}}
+            <span>{{.AvatarURL}}</span>
+            {{else}}
+            <span>no profile photo</span>
+            {{end}}
+        </td>
+    </tr>
+    {{end}}
+</table>
+{{else}}
+<div>no users in chat</div>
+{{end}}
+
+<!-- TODO: implement messages UI -->
+<!-- {{if .Messages}}
+{{else}}
+<div>TODO: messaging UI</div>
+{{end}} -->

@@ -32,7 +32,8 @@ func createApp(db *gorm.DB) *fiber.App {
 	htmlEngine := html.New("templates/", ".html")
 
 	app := fiber.New(fiber.Config{
-		Views: htmlEngine,
+		Views:       htmlEngine,
+		ViewsLayout: "layouts/base",
 		// Global custom error handler
 		ErrorHandler: func(c *fiber.Ctx, err error) error {
 			return c.Status(fiber.StatusBadRequest).JSON(GlobalErrorHandlerResponse{
@@ -42,15 +43,7 @@ func createApp(db *gorm.DB) *fiber.App {
 		},
 	})
 
-	app.Get("/", HomeHandler)
-
-	// api
-	app.Get("/users", GetUsersHandler)
-	app.Post("/user", CreateUserHandler)
-	app.Get("/api/chats", GetChatsHandler)
-
-	// ui
-	app.Get("/chats", ChatsViewHandler)
+	setUpRoutes(app)
 
 	// app.Get("/login", func(c *fiber.Ctx) {
 	// 	c.HTML(http.StatusOK, "lofiber.html", fiber.H{
@@ -85,4 +78,14 @@ func createApp(db *gorm.DB) *fiber.App {
 	// })
 
 	return app
+}
+
+func setUpRoutes(app *fiber.App) {
+	app.Get("/", HomeHandler)
+	app.Get("/chats", ChatsViewHandler)
+	app.Get("/chats/:chatID", ViewChat)
+
+	app.Get("/users", GetUsersHandler)
+	app.Post("/user", CreateUserHandler)
+	app.Get("/api/chats", GetChatsHandler)
 }

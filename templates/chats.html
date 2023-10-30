@@ -1,18 +1,25 @@
-<html>
-
-<body>
-    <div>
-        <ul>
-            {{range .Chats}}
-            <li>
-                {{.Name}} :
-                {{range .Members}}
-                ({{.Name}}, {{.Email}}),
-                {{end}}
-            </li>
+<div>
+    <!-- todo: show chats, that belong to user only -->
+    <h2>Chats list</h2>
+    <ul>
+        {{range .Chats}}
+        <li>
+            <b>{{.Name}}</b> :
+            {{range .Members}}
+            {{.Name}},
             {{end}}
-        </ul>
-    </div>
-</body>
+            <button onclick="joinChat()">join</button>
+            <button onclick="viewChat({{.ID}})">view</button>
+        </li>
+        {{end}}
+    </ul>
+</div>
+<script>
+    function joinChat() {
+        alert("todo: implement joinChat")
+    }
 
-</html>
+    function viewChat(chatId) {
+        window.location.href = `/chats/${chatId}`
+    }
+</script>

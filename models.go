@@ -5,8 +5,9 @@ import "gorm.io/gorm"
 type User struct {
 	*gorm.Model
 
-	Name  string `gorm:"uniqueIndex" validate:"required"`
-	Email string `gorm:"uniqueIndex" validate:"required"`
+	Name      string `gorm:"uniqueIndex" validate:"required"`
+	Email     string `gorm:"uniqueIndex" validate:"required"`
+	AvatarURL string
 
 	Chats []Chat `gorm:"many2many:chat_members"`
 }

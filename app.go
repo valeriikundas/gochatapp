@@ -4,16 +4,19 @@ import (
 	"flag"
 	"log"
 
+	"github.com/go-playground/validator/v10"
 	"gorm.io/gorm"
 )
 
 var db *gorm.DB
+var validate *validator.Validate
 
 func main() {
 	shouldGenerateChats := flag.Bool("generateChats", false, "Should generate chats?")
 	flag.Parse()
 
 	db = connectDatabase("chatapp")
+	validate = validator.New()
 
 	if *shouldGenerateChats {
 		err := generateRandomChats(nil, db)

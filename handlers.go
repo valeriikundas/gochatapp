@@ -5,19 +5,31 @@ import (
 	"encoding/json"
 	"log"
 
-	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 )
 
 func ChatsViewHandler(c *fiber.Ctx) error {
 	var chats []Chat
-	tx := db.Find(&chats)
+	tx := db.Model(&Chat{}).Preload("Members").Find(&chats)
 	if tx.Error != nil {
 		return tx.Error
 	}
 	return c.Render("chats", fiber.Map{
-		"chats": chats,
+		"Chats": chats,
 	})
+}
+
+func ViewChat(c *fiber.Ctx) error {
+	chatID, err := c.ParamsInt("chatId")
+	if err != nil {
+		return err
+	}
+	var chat Chat
+	tx := db.Preload("Members").Where("id = ?", chatID).First(&chat)
+	if tx.Error != nil {
+		return tx.Error
+	}
+	return c.Render("chat", chat)
 }
 
 func HomeHandler(c *fiber.Ctx) error {
@@ -48,20 +60,23 @@ func CreateUserHandler(c *fiber.Ctx) error {
 	if err != nil {
 		return err
 	}
-	validate := validator.New()
+
 	err = validate.Struct(user)
 	if err != nil {
-		var errors []FieldError
-		for _, err := range err.(validator.ValidationErrors) {
-			el := FieldError{
-				Field: err.Field(),
-				Tag:   err.Tag(),
-				Param: err.Param(),
-			}
-			errors = append(errors, el)
-		}
-		return c.Status(fiber.StatusBadRequest).JSON(errors)
+		return c.Status(fiber.StatusBadRequest).JSON(err.Error())
 	}
+	// if err != nil {
+	// 	var errors []FieldError
+	// 	for _, err := range err.(validator.ValidationErrors) {
+	// 		el := FieldError{
+	// 			Field: err.Field(),
+	// 			Tag:   err.Tag(),
+	// 			Param: err.Param(),
+	// 		}
+	// 		errors = append(errors, el)
+	// 	}
+	// 	return c.Status(fiber.StatusBadRequest).JSON(errors)
+	// }
 	tx := db.Create(&user)
 	if tx.Error != nil {
 		return tx.Error
