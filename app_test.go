@@ -43,7 +43,7 @@ func TestGetChats(t *testing.T) {
 	utils.AssertEqual(t, nil, err)
 	utils.AssertEqual(t, fiber.StatusOK, resp.StatusCode)
 
-	var data ChatsResponse
+	var data GetChatsResponse
 	err = json.NewDecoder(resp.Body).Decode(&data)
 	utils.AssertEqual(t, nil, err)
 	utils.AssertEqual(t, 100, len(data.Chats))
