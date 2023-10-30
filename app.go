@@ -1,6 +1,9 @@
 package main
 
 import (
+	"encoding/json"
+	"flag"
+	"fmt"
 	"log"
 
 	"github.com/go-playground/validator/v10"
@@ -22,6 +25,7 @@ type User struct {
 type Chat struct {
 	*gorm.Model
 
+	Name    string `gorm:"uniqueIndex" validate:"required"`
 	Members []User `gorm:"many2many:chat_members"`
 }
 
@@ -40,18 +44,35 @@ type FieldError struct {
 }
 
 func main() {
+	shouldGenerateChats := flag.Bool("generateChats", false, "generate chats?")
+	flag.Parse()
 
-	dsn := "host=0.0.0.0 port=5432 dbname=chatapp sslmode=disable TimeZone=Europe/Kiev"
+	db := connectDatabase("chatapp")
+
+	if *shouldGenerateChats {
+		generateRandomChats(nil, db)
+		return
+	}
+
+	app := createApp(db)
+	log.Fatal(app.Listen("0.0.0.0:8080"))
+}
+
+func connectDatabase(dbName string) *gorm.DB {
+	dsn := fmt.Sprintf("host=%s port=%d dbname=%s sslmode=disable TimeZone=Europe/Kiev", "0.0.0.0", 5432, dbName)
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
 		panic(err)
 	}
 
-	err = db.AutoMigrate(&User{})
+	err = db.AutoMigrate(&User{}, &Chat{})
 	if err != nil {
 		panic(err)
 	}
+	return db
+}
 
+func createApp(db *gorm.DB) *fiber.App {
 	htmlEngine := html.New("templates/", ".html")
 
 	app := fiber.New(fiber.Config{
@@ -117,13 +138,16 @@ func main() {
 
 	app.Get("/api/chats", func(c *fiber.Ctx) error {
 		var chats []Chat
-		tx := db.Find(&chats)
+		tx := db.Model(&Chat{}).Preload("Members").Find(&chats)
 		if tx.Error != nil {
 			return tx.Error
 		}
-		return c.JSON(fiber.Map{
-			"chats": chats,
-		})
+		bytes, err := json.MarshalIndent(fiber.Map{"chats": chats}, "", "  ")
+		if err != nil {
+			return err
+		}
+		return c.SendString(string(bytes))
+
 	})
 
 	app.Get("/chats", func(c *fiber.Ctx) error {
@@ -136,9 +160,6 @@ func main() {
 			"chats": chats,
 		})
 	})
-
-	// TODO: generate random chats
-	// TODO: first test
 
 	// app.Get("/login", func(c *fiber.Ctx) {
 	// 	c.HTML(http.StatusOK, "lofiber.html", fiber.H{
@@ -172,11 +193,14 @@ func main() {
 	// 	})
 	// })
 
-	// in general writing a chat app
-	// write a signup in tdd fashion
-
-	log.Fatal(app.Listen("0.0.0.0:8080"))
+	return app
 }
 
-// todo:
-// add auth https://medium.com/@abhinavv.singh/a-comprehensive-guide-to-authentication-and-authorization-in-go-golang-6f783b4cea18
+// TODO: add auth https://medium.com/@abhinavv.singh/a-comprehensive-guide-to-authentication-and-authorization-in-go-golang-6f783b4cea18
+// TODO: generate random chats
+// TODO: first test
+// TODO: in general writing a chat app
+// TODO: write a signup in tdd fashion
+// TODO: add cache
+// TODO: add pubsub
+// TODO: add photo storage
