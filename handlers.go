@@ -25,11 +25,17 @@ func ViewChat(c *fiber.Ctx) error {
 		return err
 	}
 	var chat Chat
-	tx := db.Preload("Members").Where("id = ?", chatID).First(&chat)
+	tx := db.Preload("Members").Where("id = ?", chatID).Preload("Messages.From").First(&chat)
 	if tx.Error != nil {
 		return tx.Error
 	}
-	return c.Render("chat", chat)
+	var user User
+	// todo: implement current user functionality
+	db.Take(&user)
+	return c.Render("chat", fiber.Map{
+		"Chat": chat,
+		"User": user,
+	})
 }
 
 func HomeHandler(c *fiber.Ctx) error {

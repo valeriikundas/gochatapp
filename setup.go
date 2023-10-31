@@ -21,7 +21,7 @@ func connectDatabase(dbName string) *gorm.DB {
 		panic(err)
 	}
 
-	err = db.AutoMigrate(&User{}, &Chat{})
+	err = db.AutoMigrate(&User{}, &Chat{}, &Message{})
 	if err != nil {
 		panic(err)
 	}

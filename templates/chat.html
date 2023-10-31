@@ -1,8 +1,8 @@
-<h4>{{.Name}}</h4>
+<h4>{{.Chat.Name}}</h4>
 
-{{if .Members}}
+{{if .Chat.Members}}
 <table>
-    {{range .Members}}
+    {{range .Chat.Members}}
     <tr>
         <td>{{.Name}}</td>
         <td>{{.Email}}</td>
@@ -22,7 +22,41 @@
 {{end}}
 
 <!-- TODO: implement messages UI -->
-<!-- {{if .Messages}}
+{{if .Chat.Messages}}
+<table>
+    {{range .Chat.Messages}}
+    <tr>
+        <td>{{.From.Name}}</td>
+        <td>{{.Content}}</td>
+    </tr>
+    {{end}}
+</table>
 {{else}}
-<div>TODO: messaging UI</div>
-{{end}} -->
+<h6>chat is empty</h6>
+{{end}}
+
+
+<script>
+    function sendMessage() {
+        let message = document.getElementById("message").value
+        console.log("message=", message)
+        alert(message)
+
+        $.post("/api/chat/{{.Chat.ID}}", {
+            fromID: "{{.User.ID}}",
+            content: message,
+        })
+    }
+</script>
+
+<form action=""
+      method="POST">
+    <input type="text"
+           id="message"
+           name="message"
+           placeholder="write..."
+           required />
+    <input type="button"
+           value="Send"
+           onclick="sendMessage()" />
+</form>
