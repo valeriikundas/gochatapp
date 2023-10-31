@@ -7,11 +7,11 @@ import (
 	"io"
 	"math"
 	"net/http/httptest"
-	"os/exec"
 	"testing"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/utils"
+	"gorm.io/gorm"
 )
 
 func TestAbs(t *testing.T) {
@@ -31,9 +31,9 @@ func TestFiber(t *testing.T) {
 }
 
 func TestGetChats(t *testing.T) {
-	var dropCmd *exec.Cmd
-	DB, dropCmd = prepareTestDb(t)
-	defer dropCmd.Run()
+	var clearDB func(*gorm.DB) error
+	DB, clearDB = prepareTestDb(t)
+	defer clearDB(DB)
 	app := createApp(DB)
 
 	generateRandomChats(t, DB)
@@ -49,9 +49,9 @@ func TestGetChats(t *testing.T) {
 }
 
 func TestSendMessage(t *testing.T) {
-	var dropCmd *exec.Cmd
-	DB, dropCmd = prepareTestDb(t)
-	defer dropCmd.Run()
+	var clearDB func(*gorm.DB) error
+	DB, clearDB = prepareTestDb(t)
+	defer clearDB(DB)
 
 	app := createApp(DB)
 

@@ -97,7 +97,6 @@ type GetChatsResponse struct {
 func GetChats(c *fiber.Ctx) error {
 	var chats []Chat
 	ch := &Chat{}
-	logger.Errorf("ch=%v\n", ch)
 	model := DB.Model(ch)
 	query := model.Preload("Members")
 	tx := query.Find(&chats)

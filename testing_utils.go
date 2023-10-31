@@ -7,24 +7,29 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gofiber/fiber/v2/utils"
 	"gorm.io/gorm"
 )
 
-func prepareTestDb(t *testing.T) (db *gorm.DB, dropCmd *exec.Cmd) {
-	dropCmd = dropDBCommand()
-	err := dropCmd.Run()
+func clearDB(db *gorm.DB) error {
+	tables := []string{"messages", "chat_members", "chats", "users"}
+	for _, table := range tables {
+		tx := db.Exec(fmt.Sprintf("DELETE FROM %s", table))
+		if tx.Error != nil {
+			return tx.Error
+		}
+	}
+	return nil
+}
+
+func prepareTestDb(t *testing.T) (*gorm.DB, func(*gorm.DB) error) {
+	DB = connectDatabase("chatapp_test")
+
+	err := clearDB(DB)
 	if err != nil {
 		log.Printf("dropdb failed %v\n", err)
 	}
 
-	createCmd := createDBCommand()
-	bytes, err := createCmd.Output()
-	utils.AssertEqual(t, nil, err, fmt.Sprintf("bytes %v", bytes))
-
-	db = connectDatabase("chatapp_test")
-	dropCmd = dropDBCommand()
-	return
+	return DB, clearDB
 }
 
 func createDBCommand() *exec.Cmd {
