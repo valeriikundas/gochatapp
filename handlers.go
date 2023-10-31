@@ -6,13 +6,12 @@ import (
 
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/fiber/v2/log"
 	"github.com/pkg/errors"
 )
 
 func ChatsViewHandler(c *fiber.Ctx) error {
 	var chats []Chat
-	tx := db.Model(&Chat{}).Preload("Members").Find(&chats)
+	tx := DB.Model(&Chat{}).Preload("Members").Find(&chats)
 	if tx.Error != nil {
 		return tx.Error
 	}
@@ -27,13 +26,13 @@ func ViewChat(c *fiber.Ctx) error {
 		return err
 	}
 	var chat Chat
-	tx := db.Preload("Members").Where("id = ?", chatID).Preload("Messages.From").First(&chat)
+	tx := DB.Preload("Members").Where("id = ?", chatID).Preload("Messages.From").First(&chat)
 	if tx.Error != nil {
 		return tx.Error
 	}
 	var user User
 	// todo: implement current user functionality
-	db.Take(&user)
+	DB.Take(&user)
 	return c.Render("chat", fiber.Map{
 		"Chat": chat,
 		"User": user,
@@ -48,7 +47,7 @@ func HomeHandler(c *fiber.Ctx) error {
 
 func GetUsersHandler(c *fiber.Ctx) error {
 	var users []User
-	tx := db.Find(&users)
+	tx := DB.Find(&users)
 	if tx.Error != nil {
 		return tx.Error
 	}
@@ -84,7 +83,7 @@ func CreateUserHandler(c *fiber.Ctx) error {
 	// 	}
 	// 	return c.Status(fiber.StatusBadRequest).JSON(errors)
 	// }
-	tx := db.Create(&user)
+	tx := DB.Create(&user)
 	if tx.Error != nil {
 		return tx.Error
 	}
@@ -95,9 +94,13 @@ type GetChatsResponse struct {
 	Chats []Chat
 }
 
-func GetChatsHandler(c *fiber.Ctx) error {
+func GetChats(c *fiber.Ctx) error {
 	var chats []Chat
-	tx := db.Model(&Chat{}).Preload("Members").Find(&chats)
+	ch := &Chat{}
+	logger.Errorf("ch=%v\n", ch)
+	model := DB.Model(ch)
+	query := model.Preload("Members")
+	tx := query.Find(&chats)
 	if tx.Error != nil {
 		return tx.Error
 	}
@@ -151,10 +154,10 @@ func SendMessage(c *fiber.Ctx) error {
 		FromID:  data.FromID,
 		Content: data.Content,
 	}
-	tx := db.Create(&message)
+	tx := DB.Create(&message)
 
 	if tx.Error != nil {
-		log.Errorf("er=%v\n", tx.Statement.Error)
+		logger.Errorf("er=%v\n", tx.Statement.Error)
 		return errors.Wrap(tx.Error, "db create message failed")
 	}
 

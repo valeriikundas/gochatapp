@@ -7,6 +7,7 @@ import (
 	"io"
 	"math"
 	"net/http/httptest"
+	"os/exec"
 	"testing"
 
 	"github.com/gofiber/fiber/v2"
@@ -30,11 +31,12 @@ func TestFiber(t *testing.T) {
 }
 
 func TestGetChats(t *testing.T) {
-	db, dropCmd := prepareTestDb(t)
+	var dropCmd *exec.Cmd
+	DB, dropCmd = prepareTestDb(t)
 	defer dropCmd.Run()
-	app := createApp(db)
+	app := createApp(DB)
 
-	generateRandomChats(t, db)
+	generateRandomChats(t, DB)
 
 	resp, err := app.Test(httptest.NewRequest(fiber.MethodGet, "/api/chats", nil))
 	utils.AssertEqual(t, nil, err)
@@ -47,20 +49,20 @@ func TestGetChats(t *testing.T) {
 }
 
 func TestSendMessage(t *testing.T) {
-	db1, dropCmd := prepareTestDb(t)
-	db = db1
+	var dropCmd *exec.Cmd
+	DB, dropCmd = prepareTestDb(t)
 	defer dropCmd.Run()
 
-	app := createApp(db)
+	app := createApp(DB)
 
 	// TODO: mock database during testing
 	// app := fiber.New(fiber.Config{})
 	// app.Add(fiber.MethodPost, "/api/chat/:chatID", SendMessage)
 
-	user, err := addRandomUser(db)
+	user, err := addRandomUser(DB)
 	utils.AssertEqual(t, nil, err)
 
-	chat, err := addRandomChat(db)
+	chat, err := addRandomChat(DB)
 	utils.AssertEqual(t, nil, err)
 
 	buf := new(bytes.Buffer)
@@ -89,7 +91,7 @@ func TestSendMessage(t *testing.T) {
 	utils.AssertEqual(t, nil, err)
 
 	var message Message
-	tx := db.Find(&message)
+	tx := DB.Find(&message)
 	utils.AssertEqual(t, nil, tx.Error)
 	utils.AssertEqual(t, message.ID, sendMessageResponse.ID)
 	utils.AssertEqual(t, messageContent, message.Content)

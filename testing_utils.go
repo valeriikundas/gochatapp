@@ -12,26 +12,33 @@ import (
 )
 
 func prepareTestDb(t *testing.T) (db *gorm.DB, dropCmd *exec.Cmd) {
-	dropCmd = createDropDbCommand()
+	dropCmd = dropDBCommand()
 	err := dropCmd.Run()
 	if err != nil {
-		log.Printf("warning dropdb failed %v\n", err)
+		log.Printf("dropdb failed %v\n", err)
 	}
 
-	createCommand := "createdb --port 5432 --user valerii chatapp_test"
-	createCommandSplit := strings.Split(createCommand, " ")
-	createCmd := exec.Command(createCommandSplit[0], createCommandSplit[1:]...)
+	createCmd := createDBCommand()
 	bytes, err := createCmd.Output()
 	utils.AssertEqual(t, nil, err, fmt.Sprintf("bytes %v", bytes))
 
 	db = connectDatabase("chatapp_test")
-	dropCmd = createDropDbCommand()
+	dropCmd = dropDBCommand()
 	return
 }
 
-func createDropDbCommand() *exec.Cmd {
-	command := "dropdb --port 5432 --user valerii chatapp_test"
+func createDBCommand() *exec.Cmd {
+	createCommand := fmt.Sprintf("createdb --host %s --port %d --user %s %s", "0.0.0.0", 5432, "valerii", "chatapp_test")
+	log.Println(createCommand)
+	createCommandSplit := strings.Split(createCommand, " ")
+	createCmd := exec.Command(createCommandSplit[0], createCommandSplit[1:]...)
+	return createCmd
+}
+
+func dropDBCommand() *exec.Cmd {
+	command := "dropdb --host 0.0.0.0 --port 5432 --user valerii chatapp_test"
 	commandSplit := strings.Split(command, " ")
 	cmd := exec.Command(commandSplit[0], commandSplit[1:]...)
+	log.Println(cmd)
 	return cmd
 }

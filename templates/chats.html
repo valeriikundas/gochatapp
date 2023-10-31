@@ -1,18 +1,28 @@
 <div>
     <!-- todo: show chats, that belong to user only -->
     <h2>Chats list</h2>
-    <ul>
+    <table>
         {{range .Chats}}
-        <li>
-            <b>{{.Name}}</b> :
-            {{range .Members}}
-            {{.Name}},
-            {{end}}
-            <button onclick="joinChat()">join</button>
-            <button onclick="viewChat({{.ID}})">view</button>
-        </li>
+        <tr>
+            <td>
+                <div>
+                    {{.Name}}
+                </div>
+            </td>
+            <td>
+                {{range .Members}}
+                <div>{{.Name}}</div>
+                {{end}}
+            </td>
+            <td>
+                <button onclick="joinChat()">join</button>
+            </td>
+            <td>
+                <button onclick="viewChat({{.ID}})">view</button>
+            </td>
+        </tr>
         {{end}}
-    </ul>
+    </table>
 </div>
 <script>
     function joinChat() {

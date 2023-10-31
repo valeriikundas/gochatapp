@@ -47,22 +47,18 @@ func generateRandomChats(t *testing.T, db *gorm.DB) error {
 	userData := make([]User, 100)
 	for i := 0; i < 100; i += 1 {
 		user, err := addRandomUser(db)
-		if err != nil {
-			return err
+		if t == nil {
+			if err != nil {
+				return err
+			}
+		} else {
+			utils.AssertEqual(t, nil, err)
 		}
 		userData[i] = *user
 	}
-	tx := db.CreateInBatches(userData, 10)
-	if t == nil {
-		if tx.Error != nil {
-			return tx.Error
-		}
-	} else {
-		utils.AssertEqual(t, nil, tx.Error)
-	}
 
 	var users []User
-	tx = db.Find(&users)
+	tx := db.Find(&users)
 	if t == nil {
 		if tx.Error != nil {
 			return tx.Error
@@ -76,22 +72,19 @@ func generateRandomChats(t *testing.T, db *gorm.DB) error {
 	chatData := make([]Chat, k)
 	for i := 0; i < k; i += 1 {
 		chat, err := addRandomChat(db)
-		if err != nil {
-			return err
+		if t == nil {
+			if err != nil {
+				return err
+			}
+		} else {
+			utils.AssertEqual(t, nil, err)
 		}
 		chatData[i] = *chat
 	}
-	tx = db.CreateInBatches(chatData, 10)
-	if t == nil {
-		if tx.Error != nil {
-			return tx.Error
-		}
-	} else {
-		utils.AssertEqual(t, nil, tx.Error)
-	}
 
 	for _, chat := range chatData {
-		messagesCount := rand.Intn(100)
+		messagesCount := rand.Intn(5) + 1
+		// log.Printf("count=%v\n", messagesCount)
 		messages := make([]Message, messagesCount)
 		for i := 0; i < messagesCount; i += 1 {
 			userIndex := rand.Intn(len(userData))
@@ -103,7 +96,9 @@ func generateRandomChats(t *testing.T, db *gorm.DB) error {
 				Content: gofakeit.LoremIpsumSentence(messageLength),
 			}
 		}
-		tx := db.Create(&messages)
+		msg := messages[0]
+		// log.Printf("msg=%v\n", msg)
+		tx := db.Create(&msg)
 		if t == nil {
 			if tx.Error != nil {
 				return tx.Error
@@ -111,6 +106,7 @@ func generateRandomChats(t *testing.T, db *gorm.DB) error {
 		} else {
 			utils.AssertEqual(t, nil, tx.Error)
 		}
+		break
 	}
 
 	return nil

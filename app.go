@@ -5,27 +5,29 @@ import (
 	"log"
 
 	"github.com/go-playground/validator/v10"
+	fiberlog "github.com/gofiber/fiber/v2/log"
 	"gorm.io/gorm"
 )
 
-var db *gorm.DB
+var DB *gorm.DB
 var validate *validator.Validate
+var logger fiberlog.AllLogger
 
 func main() {
 	shouldGenerateChats := flag.Bool("generateChats", false, "Should generate chats?")
 	flag.Parse()
 
-	db = connectDatabase("chatapp")
+	DB = connectDatabase("chatapp")
 
 	if *shouldGenerateChats {
-		err := generateRandomChats(nil, db)
+		err := generateRandomChats(nil, DB)
 		if err != nil {
 			log.Fatal(err)
 		}
 		return
 	}
 
-	app := createApp(db)
+	app := createApp(DB)
 	log.Fatal(app.Listen("0.0.0.0:8080"))
 }
 
@@ -38,3 +40,4 @@ func main() {
 // TODO: add pubsub
 // TODO: add photo storage
 // TODO: auth with permissions roles (user, admin, chat admin)
+// TODO: setup https://docs.gofiber.io/contrib/swagger_v1.x.x/swagger/

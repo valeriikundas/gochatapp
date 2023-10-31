@@ -2,9 +2,12 @@ package main
 
 import (
 	"fmt"
+	"io"
+	"os"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/log"
 	"github.com/gofiber/template/html/v2"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -30,6 +33,8 @@ func connectDatabase(dbName string) *gorm.DB {
 }
 
 func createApp(db *gorm.DB) *fiber.App {
+	logger = setupLogger()
+
 	validate = validator.New()
 
 	htmlEngine := html.New("templates/", ".html")
@@ -83,13 +88,28 @@ func createApp(db *gorm.DB) *fiber.App {
 	return app
 }
 
-func setUpRoutes(app *fiber.App) {
-	app.Get("/", HomeHandler)
-	app.Get("/chats", ChatsViewHandler)
-	app.Get("/chats/:chatID", ViewChat)
+func setupLogger() log.AllLogger {
+	logger := log.DefaultLogger()
 
-	app.Get("/users", GetUsersHandler)
-	app.Post("/user", CreateUserHandler)
-	app.Get("/api/chats", GetChatsHandler)
-	app.Post("/api/chat/:chatID", SendMessage)
+	logFile, err := os.OpenFile("test.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+	if err != nil {
+		panic(err)
+	}
+	logWriter := io.MultiWriter(os.Stdout, logFile)
+	logger.SetOutput(logWriter)
+	return logger
+}
+
+func setUpRoutes(app *fiber.App) {
+	api := app.Group("/api")
+	ui := app.Group("/ui")
+
+	ui.Get("/chats/:chatID", ViewChat)
+	ui.Get("/chats", ChatsViewHandler)
+	ui.Get("/", HomeHandler)
+
+	api.Get("/users", GetUsersHandler)
+	api.Post("/user", CreateUserHandler)
+	api.Get("/chats", GetChats)
+	api.Post("/chat/:chatID", SendMessage)
 }
