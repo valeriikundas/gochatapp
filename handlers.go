@@ -3,9 +3,11 @@ package main
 import (
 	"bytes"
 	"encoding/json"
-	"log"
 
+	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/log"
+	"github.com/pkg/errors"
 )
 
 func ChatsViewHandler(c *fiber.Ctx) error {
@@ -47,7 +49,6 @@ func HomeHandler(c *fiber.Ctx) error {
 func GetUsersHandler(c *fiber.Ctx) error {
 	var users []User
 	tx := db.Find(&users)
-	log.Printf("%v\n", users)
 	if tx.Error != nil {
 		return tx.Error
 	}
@@ -116,4 +117,48 @@ func GetChatsHandler(c *fiber.Ctx) error {
 	}
 
 	return c.SendString(string(bytes))
+}
+
+type SendMessageRequest struct {
+	FromID  uint
+	ChatID  uint
+	Content string
+}
+
+func SendMessage(c *fiber.Ctx) error {
+	var data SendMessageRequest
+	err := c.BodyParser(&data)
+	if err != nil {
+		return errors.Wrap(err, "BodyParser failed")
+	}
+
+	err = validate.Struct(data)
+	if err != nil {
+		var errors []FieldError
+		for _, err := range err.(validator.ValidationErrors) {
+			el := FieldError{
+				Field: err.Field(),
+				Tag:   err.Tag(),
+				Param: err.Param(),
+			}
+			errors = append(errors, el)
+		}
+		return c.Status(fiber.StatusBadRequest).JSON(errors)
+	}
+
+	message := Message{
+		ChatID:  data.ChatID,
+		FromID:  data.FromID,
+		Content: data.Content,
+	}
+	tx := db.Create(&message)
+
+	if tx.Error != nil {
+		log.Errorf("er=%v\n", tx.Statement.Error)
+		return errors.Wrap(tx.Error, "db create message failed")
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"ID": message.ID,
+	})
 }

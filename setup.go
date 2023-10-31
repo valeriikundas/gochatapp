@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 
+	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/template/html/v2"
 	"gorm.io/driver/postgres"
@@ -29,6 +30,8 @@ func connectDatabase(dbName string) *gorm.DB {
 }
 
 func createApp(db *gorm.DB) *fiber.App {
+	validate = validator.New()
+
 	htmlEngine := html.New("templates/", ".html")
 
 	app := fiber.New(fiber.Config{
@@ -88,4 +91,5 @@ func setUpRoutes(app *fiber.App) {
 	app.Get("/users", GetUsersHandler)
 	app.Post("/user", CreateUserHandler)
 	app.Get("/api/chats", GetChatsHandler)
+	app.Post("/api/chat/:chatID", SendMessage)
 }

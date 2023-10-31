@@ -16,7 +16,6 @@ func main() {
 	flag.Parse()
 
 	db = connectDatabase("chatapp")
-	validate = validator.New()
 
 	if *shouldGenerateChats {
 		err := generateRandomChats(nil, db)
@@ -38,3 +37,4 @@ func main() {
 // TODO: add cache
 // TODO: add pubsub
 // TODO: add photo storage
+// TODO: auth with permissions roles (user, admin, chat admin)

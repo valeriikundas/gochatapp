@@ -1,19 +1,16 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
-	"log"
+	"io"
 	"math"
 	"net/http/httptest"
-	"os/exec"
-	"strings"
 	"testing"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/utils"
-	"gorm.io/driver/postgres"
-	"gorm.io/gorm"
 )
 
 func TestAbs(t *testing.T) {
@@ -49,33 +46,53 @@ func TestGetChats(t *testing.T) {
 	utils.AssertEqual(t, 100, len(data.Chats))
 }
 
-func prepareTestDb(t *testing.T) (db *gorm.DB, dropCmd *exec.Cmd) {
-	dropCmd = createDropDbCommand()
-	err := dropCmd.Run()
-	if err != nil {
-		log.Printf("warning dropdb failed %v\n", err)
+func TestSendMessage(t *testing.T) {
+	db1, dropCmd := prepareTestDb(t)
+	db = db1
+	defer dropCmd.Run()
+
+	app := createApp(db)
+
+	// TODO: mock database during testing
+	// app := fiber.New(fiber.Config{})
+	// app.Add(fiber.MethodPost, "/api/chat/:chatID", SendMessage)
+
+	user, err := addRandomUser(db)
+	utils.AssertEqual(t, nil, err)
+
+	chat, err := addRandomChat(db)
+	utils.AssertEqual(t, nil, err)
+
+	buf := new(bytes.Buffer)
+	messageContent := "hello"
+	data := SendMessageRequest{
+		FromID:  user.ID,
+		ChatID:  chat.ID,
+		Content: messageContent,
 	}
-
-	createCommand := "createdb --port 5432 --user valerii chatapp_test"
-	createCommandSplit := strings.Split(createCommand, " ")
-	createCmd := exec.Command(createCommandSplit[0], createCommandSplit[1:]...)
-	bytes, err := createCmd.Output()
-	utils.AssertEqual(t, nil, err, fmt.Sprintf("bytes %v", bytes))
-
-	dsn := fmt.Sprintf("host=%s port=%d dbname=%s sslmode=disable TimeZone=Europe/Kiev", "0.0.0.0", 5432, "chatapp_test")
-	db, err = gorm.Open(postgres.Open(dsn))
+	err = json.NewEncoder(buf).Encode(data)
 	utils.AssertEqual(t, nil, err)
 
-	err = db.AutoMigrate(&User{})
+	req := httptest.NewRequest(fiber.MethodPost, fmt.Sprintf("/api/chat/%d", chat.ID), buf)
+	req.Header.Set("Content-Type", "application/json")
+	resp, err := app.Test(req)
 	utils.AssertEqual(t, nil, err)
 
-	dropCmd = createDropDbCommand()
-	return
-}
+	bytes2, err := io.ReadAll(resp.Body)
+	utils.AssertEqual(t, nil, err)
+	utils.AssertEqual(t, fiber.StatusOK, resp.StatusCode)
 
-func createDropDbCommand() *exec.Cmd {
-	command := "dropdb --port 5432 --user valerii chatapp_test"
-	commandSplit := strings.Split(command, " ")
-	cmd := exec.Command(commandSplit[0], commandSplit[1:]...)
-	return cmd
+	var sendMessageResponse struct {
+		ID uint
+	}
+	err = json.Unmarshal(bytes2, &sendMessageResponse)
+	utils.AssertEqual(t, nil, err)
+
+	var message Message
+	tx := db.Find(&message)
+	utils.AssertEqual(t, nil, tx.Error)
+	utils.AssertEqual(t, message.ID, sendMessageResponse.ID)
+	utils.AssertEqual(t, messageContent, message.Content)
+	utils.AssertEqual(t, user.ID, message.FromID)
+	utils.AssertEqual(t, chat.ID, message.ChatID)
 }

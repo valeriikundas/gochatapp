@@ -10,16 +10,18 @@ type User struct {
 	AvatarURL string
 
 	Chats []Chat `gorm:"many2many:chat_members"`
+
+	Messages []Message `gorm:"foreignKey:FromID"`
 }
 
 type Message struct {
 	gorm.Model
 
 	Chat   Chat
-	ChatID uint
+	ChatID uint `validate:"required"`
 
-	From   User `validate:"required"`
-	FromID uint
+	From   User
+	FromID uint `validate:"required"`
 
 	Content string `validate:"required"`
 }

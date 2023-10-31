@@ -2,7 +2,10 @@ module gowebapp
 
 go 1.20
 
-require github.com/brianvoe/gofakeit/v6 v6.24.0
+require (
+	github.com/brianvoe/gofakeit/v6 v6.24.0
+	github.com/pkg/errors v0.9.1
+)
 
 require (
 	github.com/andybalholm/brotli v1.0.5 // indirect
