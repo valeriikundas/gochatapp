@@ -7,7 +7,7 @@ type User struct {
 
 	Name           string `gorm:"uniqueIndex" validate:"required"`
 	Email          string `gorm:"uniqueIndex" validate:"required"`
-	AvatarFileName string `gorm:"uniqueIndex"`
+	AvatarFileName string `gorm:"uniqueIndex;default:null"`
 
 	Chats []Chat `gorm:"many2many:chat_members"`
 

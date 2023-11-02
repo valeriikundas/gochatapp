@@ -23,6 +23,21 @@ func addRandomUser(db *gorm.DB) (*User, error) {
 	return &user, nil
 }
 
+func addRandomUsers(db *gorm.DB, n int) ([]User, error) {
+	users := make([]User, n)
+	for i := 0; i < n; i += 1 {
+		users[i] = User{
+			Name:  gofakeit.Name(),
+			Email: gofakeit.Email(),
+		}
+	}
+	tx := db.Create(&users)
+	if tx.Error != nil {
+		return nil, tx.Error
+	}
+	return users, nil
+}
+
 func addRandomChat(db *gorm.DB) (*Chat, error) {
 	var users []User
 	tx := db.Find(&users)

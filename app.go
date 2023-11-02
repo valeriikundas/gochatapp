@@ -59,3 +59,6 @@ func main() {
 // TODO: learn to use tags
 // TODO: use goroutines somewhere
 // TODO: play around and debug internaly of fiber, gorm, docker etc
+// TODO: use github copilot free trial
+// TODO: is it useful? https://github.com/bluele/factory-go
+// TODO: setting up db for tests - setup, teardown - in other projects

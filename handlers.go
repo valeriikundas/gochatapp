@@ -101,6 +101,10 @@ func HomeView(c *fiber.Ctx) error {
 	})
 }
 
+type UsersResponse struct {
+	Users []User
+}
+
 func GetUsers(c *fiber.Ctx) error {
 	var users []User
 	tx := DB.Preload("Chats").Find(&users)
@@ -108,8 +112,8 @@ func GetUsers(c *fiber.Ctx) error {
 		return tx.Error
 	}
 
-	data := map[string]any{
-		"Users": users,
+	data := UsersResponse{
+		Users: users,
 	}
 	bytes, err := json.MarshalIndent(data, "", "  ")
 	if err != nil {
