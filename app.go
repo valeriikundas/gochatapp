@@ -58,3 +58,4 @@ func main() {
 // TODO: learn to use os, os/exec, io, bytes libs
 // TODO: learn to use tags
 // TODO: use goroutines somewhere
+// TODO: play around and debug internaly of fiber, gorm, docker etc

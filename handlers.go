@@ -28,8 +28,14 @@ func UsersView(c *fiber.Ctx) error {
 	if tx.Error != nil {
 		return tx.Error
 	}
+
+	usersResponse := make([]UserResponse, len(users))
+	for i := 0; i < len(users); i += 1 {
+		usersResponse[i] = getUserResponse(users[i])
+	}
+
 	return c.Render("users", fiber.Map{
-		"Users": users,
+		"Users": usersResponse,
 	})
 }
 
@@ -44,24 +50,30 @@ func UserView(c *fiber.Ctx) error {
 	if tx.Error != nil {
 		return tx.Error
 	}
+
+	return c.Render("user", fiber.Map{
+		"User": getUserResponse(user),
+	})
+}
+
+// TODO: don't like this name
+func getUserResponse(user User) UserResponse {
 	var avatarURL string
-	if user.AvatarFilePath != "" {
-		log.Printf("avatarFilePath=%v\n", user.AvatarFilePath)
-		avatarURL = fmt.Sprintf("0.0.0.0:8080/%s", user.AvatarFilePath)
+	if user.AvatarFileName != "" {
+		log.Printf("avatarFilePath=%v\n", user.AvatarFileName)
+		avatarURL = fmt.Sprintf("/%s", user.AvatarFileName)
 		log.Printf("avatarURL=%v\n", avatarURL)
 	} else {
 		avatarURL = ""
 	}
 
-	return c.Render("user", fiber.Map{
-		"User": UserResponse{
-			ID:        user.ID,
-			Name:      user.Name,
-			Email:     user.Email,
-			AvatarURL: avatarURL,
-			Chats:     user.Chats,
-		},
-	})
+	return UserResponse{
+		ID:        user.ID,
+		Name:      user.Name,
+		Email:     user.Email,
+		AvatarURL: avatarURL,
+		Chats:     user.Chats,
+	}
 }
 
 func ChatView(c *fiber.Ctx) error {
@@ -126,8 +138,8 @@ func GetUser(c *fiber.Ctx) error {
 		return tx.Error
 	}
 
-	log.Printf("avatarFilePath=%v\n", user.AvatarFilePath)
-	avatarURL := fmt.Sprintf("/images/%s", user.AvatarFilePath)
+	log.Printf("avatarFilePath=%v\n", user.AvatarFileName)
+	avatarURL := fmt.Sprintf("/images/%s", user.AvatarFileName)
 	log.Printf("avatarURL=%v\n", avatarURL)
 
 	userResponse := UserResponse{
@@ -266,7 +278,12 @@ func UploadUserAvatar(c *fiber.Ctx) error {
 		os.MkdirAll("./uploads", 0744)
 	}
 
-	filePath := fmt.Sprintf("./uploads/%s", file.Filename)
+	fileName := file.Filename
+	// filePath, err := url.JoinPath("uploads", fileName)
+	// if err != nil {
+	// 	return err
+	// }
+	filePath := fmt.Sprintf("uploads/%s", fileName)
 	err = c.SaveFile(file, filePath)
 	if err != nil {
 		log.Printf("err=%v\n", err)
@@ -274,7 +291,7 @@ func UploadUserAvatar(c *fiber.Ctx) error {
 	}
 
 	userID := c.Params("userID")
-	tx := DB.Model(&User{}).Where("id = ?", userID).Update("AvatarFilePath", filePath)
+	tx := DB.Model(&User{}).Where("id = ?", userID).Update("AvatarFileName", fileName)
 	if tx.Error != nil {
 		return tx.Error
 	}
