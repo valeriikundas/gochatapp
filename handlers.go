@@ -23,10 +23,9 @@ func ChatsView(c *fiber.Ctx) error {
 }
 
 func UsersView(c *fiber.Ctx) error {
-	var users []User
-	tx := DB.Find(&users)
-	if tx.Error != nil {
-		return tx.Error
+	users, err := getUsers()
+	if err != nil {
+		return err
 	}
 
 	usersResponse := make([]UserResponse, len(users))
@@ -72,7 +71,6 @@ func getUserResponse(user User) UserResponse {
 		Name:      user.Name,
 		Email:     user.Email,
 		AvatarURL: avatarURL,
-		Chats:     user.Chats,
 	}
 }
 
@@ -102,19 +100,34 @@ func HomeView(c *fiber.Ctx) error {
 }
 
 type UsersResponse struct {
-	Users []User
+	Users []UserResponse
+}
+
+func getUsers() ([]User, error) {
+	var users []User
+	tx := DB.Find(&users)
+	if tx.Error != nil {
+		return nil, tx.Error
+	}
+
+	return users, nil
 }
 
 func GetUsers(c *fiber.Ctx) error {
-	var users []User
-	tx := DB.Preload("Chats").Find(&users)
-	if tx.Error != nil {
-		return tx.Error
+	users, err := getUsers()
+	if err != nil {
+		return err
+	}
+
+	usersResponse := make([]UserResponse, len(users))
+	for i := 0; i < len(users); i += 1 {
+		usersResponse[i] = getUserResponse(users[i])
 	}
 
 	data := UsersResponse{
-		Users: users,
+		Users: usersResponse,
 	}
+
 	bytes, err := json.MarshalIndent(data, "", "  ")
 	if err != nil {
 		return err
@@ -128,7 +141,6 @@ type UserResponse struct {
 	Name      string
 	Email     string
 	AvatarURL string
-	Chats     []Chat
 }
 
 func GetUser(c *fiber.Ctx) error {
