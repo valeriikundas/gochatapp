@@ -1,8 +1,11 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
+	"html/template"
+	"io"
 	"log"
 	"os"
 
@@ -87,10 +90,32 @@ func ChatView(c *fiber.Ctx) error {
 	var user User
 	// todo: implement current user functionality
 	DB.Take(&user)
-	return c.Render("chat", fiber.Map{
+
+	// TODO: why is this not working? is this a bug that fiber should fix
+	// return c.Render("chat", fiber.Map{
+	// 	"Chat": chat,
+	// 	"User": user,
+	// })
+
+	var buf bytes.Buffer
+	tmpl := template.Must(template.ParseFiles("templates/chat.html"))
+	data := fiber.Map{
 		"Chat": chat,
 		"User": user,
-	})
+	}
+	err = tmpl.Execute(&buf, data)
+	if err != nil {
+		return err
+	}
+
+	bytes, err := io.ReadAll(&buf)
+	if err != nil {
+		return err
+	}
+
+	body := string(bytes)
+
+	return c.SendString(body)
 }
 
 func HomeView(c *fiber.Ctx) error {

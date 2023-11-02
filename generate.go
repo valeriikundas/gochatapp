@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"math"
 	"math/rand"
 	"strings"
@@ -43,6 +44,10 @@ func addRandomChat(db *gorm.DB) (*Chat, error) {
 	tx := db.Find(&users)
 	if tx.Error != nil {
 		return nil, tx.Error
+	}
+
+	if len(users) == 0 {
+		return nil, errors.New("cannot add random chat as there are no users in the database")
 	}
 
 	mn := int(math.Min(float64(len(users)), float64(10)))

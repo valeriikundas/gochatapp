@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
@@ -81,4 +82,45 @@ func TestUploadUserAvatar(t *testing.T) {
 
 	// TODO: currently saves into the same repo as prod `uploads`, would be better to make a temporary repo
 	utils.AssertEqual(t, fileName, resultUser.AvatarFileName)
+}
+
+func TestGetChatsView(t *testing.T) {
+	var clearDB func(*gorm.DB) error
+	DB, clearDB = prepareTestDb(t)
+	defer clearDB(DB)
+	app := createApp(DB)
+
+	users, err := addRandomUsers(DB, 10)
+	utils.AssertEqual(t, nil, err)
+	utils.AssertEqual(t, 10, len(users))
+
+	chat, err := addRandomChat(DB)
+	utils.AssertEqual(t, nil, err)
+
+	resp, err := app.Test(httptest.NewRequest(fiber.MethodGet, "/ui/chats/", nil))
+	utils.AssertEqual(t, nil, err)
+	utils.AssertEqual(t, fiber.StatusOK, resp.StatusCode)
+
+	// TODO: search chat name and users in html
+	log.Printf("chat=%v\n", chat)
+}
+
+func TestGetChatView(t *testing.T) {
+	var clearDB func(*gorm.DB) error
+	DB, clearDB = prepareTestDb(t)
+	defer clearDB(DB)
+	app := createApp(DB)
+
+	users, err := addRandomUsers(DB, 10)
+	utils.AssertEqual(t, nil, err)
+	utils.AssertEqual(t, 10, len(users))
+
+	chat, err := addRandomChat(DB)
+	utils.AssertEqual(t, nil, err)
+
+	resp, err := app.Test(httptest.NewRequest(fiber.MethodGet, fmt.Sprintf("/ui/chats/%d", chat.ID), nil))
+	utils.AssertEqual(t, nil, err)
+	utils.AssertEqual(t, fiber.StatusOK, resp.StatusCode)
+
+	// TODO: test html
 }
