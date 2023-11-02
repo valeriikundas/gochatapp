@@ -1,15 +1,17 @@
 package main
 
 import (
-	"bytes"
 	"encoding/json"
+	"fmt"
+	"log"
+	"os"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	"github.com/pkg/errors"
 )
 
-func ChatsViewHandler(c *fiber.Ctx) error {
+func ChatsView(c *fiber.Ctx) error {
 	var chats []Chat
 	tx := DB.Model(&Chat{}).Preload("Members").Find(&chats)
 	if tx.Error != nil {
@@ -20,7 +22,49 @@ func ChatsViewHandler(c *fiber.Ctx) error {
 	})
 }
 
-func ViewChat(c *fiber.Ctx) error {
+func UsersView(c *fiber.Ctx) error {
+	var users []User
+	tx := DB.Find(&users)
+	if tx.Error != nil {
+		return tx.Error
+	}
+	return c.Render("users", fiber.Map{
+		"Users": users,
+	})
+}
+
+func UserView(c *fiber.Ctx) error {
+	var user User
+	userID, err := c.ParamsInt("userID")
+	if err != nil {
+		return err
+	}
+	// TODO: load members only for one queried record
+	tx := DB.Preload("Chats").Preload("Chats.Members").First(&user, userID)
+	if tx.Error != nil {
+		return tx.Error
+	}
+	var avatarURL string
+	if user.AvatarFilePath != "" {
+		log.Printf("avatarFilePath=%v\n", user.AvatarFilePath)
+		avatarURL = fmt.Sprintf("0.0.0.0:8080/%s", user.AvatarFilePath)
+		log.Printf("avatarURL=%v\n", avatarURL)
+	} else {
+		avatarURL = ""
+	}
+
+	return c.Render("user", fiber.Map{
+		"User": UserResponse{
+			ID:        user.ID,
+			Name:      user.Name,
+			Email:     user.Email,
+			AvatarURL: avatarURL,
+			Chats:     user.Chats,
+		},
+	})
+}
+
+func ChatView(c *fiber.Ctx) error {
 	chatID, err := c.ParamsInt("chatId")
 	if err != nil {
 		return err
@@ -39,28 +83,74 @@ func ViewChat(c *fiber.Ctx) error {
 	})
 }
 
-func HomeHandler(c *fiber.Ctx) error {
+func HomeView(c *fiber.Ctx) error {
 	return c.Render("home", fiber.Map{
 		"a": "b",
 	})
 }
 
-func GetUsersHandler(c *fiber.Ctx) error {
+func GetUsers(c *fiber.Ctx) error {
 	var users []User
-	tx := DB.Find(&users)
+	tx := DB.Preload("Chats").Find(&users)
 	if tx.Error != nil {
 		return tx.Error
 	}
-	return c.Render("users", fiber.Map{
+
+	data := map[string]any{
 		"Users": users,
-	})
+	}
+	bytes, err := json.MarshalIndent(data, "", "  ")
+	if err != nil {
+		return err
+	}
+	// TODO: return only requested fields, no created_at,deleted_at,messages etc for all route handlers
+	return c.SendString(string(bytes))
+}
+
+type UserResponse struct {
+	ID        uint
+	Name      string
+	Email     string
+	AvatarURL string
+	Chats     []Chat
+}
+
+func GetUser(c *fiber.Ctx) error {
+	var user User
+	userID, err := c.ParamsInt("userID")
+	if err != nil {
+		return err
+	}
+	tx := DB.Preload("Chats").First(&user, userID)
+	if tx.Error != nil {
+		return tx.Error
+	}
+
+	log.Printf("avatarFilePath=%v\n", user.AvatarFilePath)
+	avatarURL := fmt.Sprintf("/images/%s", user.AvatarFilePath)
+	log.Printf("avatarURL=%v\n", avatarURL)
+
+	userResponse := UserResponse{
+		Name:      user.Name,
+		Email:     user.Email,
+		AvatarURL: avatarURL,
+	}
+
+	response := map[string]any{
+		"User": userResponse,
+	}
+	bytes, err := json.MarshalIndent(response, "", "  ")
+	if err != nil {
+		return err
+	}
+	return c.SendString(string(bytes))
 }
 
 type FieldError struct {
 	Field, Tag, Param string
 }
 
-func CreateUserHandler(c *fiber.Ctx) error {
+func CreateUser(c *fiber.Ctx) error {
 	var user User
 	err := c.BodyParser(&user)
 	if err != nil {
@@ -107,13 +197,7 @@ func GetChats(c *fiber.Ctx) error {
 	data := GetChatsResponse{
 		Chats: chats,
 	}
-	b := new(bytes.Buffer)
-	err := json.NewEncoder(b).Encode(data)
-	if err != nil {
-		return err
-	}
-
-	bytes, err := json.MarshalIndent(fiber.Map{"chats": chats}, "", "  ")
+	bytes, err := json.MarshalIndent(data, "", "  ")
 	if err != nil {
 		return err
 	}
@@ -162,5 +246,40 @@ func SendMessage(c *fiber.Ctx) error {
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"ID": message.ID,
+	})
+}
+
+func RootHandler(c *fiber.Ctx) error {
+	return c.Redirect("/ui", fiber.StatusPermanentRedirect)
+}
+
+func UploadUserAvatar(c *fiber.Ctx) error {
+	log.Println("UploadUserAvatar")
+
+	file, err := c.FormFile("image")
+	if err != nil {
+		return err
+	}
+
+	_, err = os.Stat("uploads/")
+	if os.IsNotExist(err) {
+		os.MkdirAll("./uploads", 0744)
+	}
+
+	filePath := fmt.Sprintf("./uploads/%s", file.Filename)
+	err = c.SaveFile(file, filePath)
+	if err != nil {
+		log.Printf("err=%v\n", err)
+		return err
+	}
+
+	userID := c.Params("userID")
+	tx := DB.Model(&User{}).Where("id = ?", userID).Update("AvatarFilePath", filePath)
+	if tx.Error != nil {
+		return tx.Error
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"status": "ok",
 	})
 }

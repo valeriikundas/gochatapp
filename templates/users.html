@@ -1,18 +1,23 @@
-<html>
-
-<head>
-    <link rel="stylesheet"
-          href="https://unpkg.com/mvp.css">
-</head>
-
-<body>
-    <div>
-        <ul>
-            {{range .Users}}
-            <li>{{.Name}} - {{.Email}}</li>
+<div style="display:flex; flex-wrap:wrap; justify-content: space-between; flex-flow: row wrap; border: 1px solid blue;">
+    {{range .Users}}
+    <div style="border: solid 1px purple; margin: 10px">
+        <div style="text-align: center; margin: 10px;">
+            {{if .AvatarURL}}
+            <img src="{{.AvatarURL}}"
+                 alt="user profile photo" />
+            {{else}}
+            <img src="https://picsum.photos/120/160"
+                 alt="default image" />
             {{end}}
-        </ul>
-    </div>
-</body>
 
-</html>
+        </div>
+        <div style="text-align: center;">
+            {{.Name}}
+        </div>
+        <div style="font-size: 12px; text-align: center;">
+            {{.Email}}
+        </div>
+        <button onclick="location.href='/ui/users/{{.ID}}'">See detailed user info</button>
+    </div>
+    {{end}}
+</div>

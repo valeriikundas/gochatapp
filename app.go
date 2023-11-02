@@ -31,13 +31,30 @@ func main() {
 	log.Fatal(app.Listen("0.0.0.0:8080"))
 }
 
+// TODO: add photo storage: 2 options: postgresql, s3-like storage
+// implement 2 options with interchangibility option
+// maybe use cache for storing lately accessed images
+
+// TODO: use tdd, coverage to >90%
 // TODO: add auth https://medium.com/@abhinavv.singh/a-comprehensive-guide-to-authentication-and-authorization-in-go-golang-6f783b4cea18
-// TODO: generate random chats
-// TODO: first test
 // TODO: in general writing a chat app
 // TODO: write a signup in tdd fashion
-// TODO: add cache
-// TODO: add pubsub
-// TODO: add photo storage
+// TODO: add cache (e.g. redis)
+// TODO: add pubsub/message queue of some kind
 // TODO: auth with permissions roles (user, admin, chat admin)
-// TODO: setup https://docs.gofiber.io/contrib/swagger_v1.x.x/swagger/
+// TODO: setup swagger https://docs.gofiber.io/contrib/swagger_v1.x.x/swagger/
+// TODO: try https://github.com/go-gorm/gen
+// TODO: use protobufs
+// TODO: setup monkey testing
+// TODO: try BDD
+// TODO: deploy to aws
+// TODO: setup docker-compose
+// TODO: setup ci/cd
+// TODO: use all features of gorm
+// TODO: use all features of fiber
+// TODO: setup automatic backup for database and images
+// TODO: use db hooks for something
+// TODO: add chatgpt integration as bot
+// TODO: learn to use os, os/exec, io, bytes libs
+// TODO: learn to use tags
+// TODO: use goroutines somewhere

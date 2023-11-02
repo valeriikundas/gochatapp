@@ -106,7 +106,6 @@ func generateRandomChats(t *testing.T, db *gorm.DB) error {
 		} else {
 			utils.AssertEqual(t, nil, tx.Error)
 		}
-		break
 	}
 
 	return nil

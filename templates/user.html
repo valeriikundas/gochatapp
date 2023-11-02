@@ -1,0 +1,143 @@
+<div>
+    <p>
+        {{.User.AvatarURL}}
+    </p>
+</div>
+
+<div class="container mx-auto w-1/4"
+     style="margin-top: 50px; margin-bottom: 50px;">
+    <div class="card w-96 bg-base-100 shadow-xl">
+        <figure>
+            {{if .User.AvatarURL}}
+            <img src="{{.User.AvatarURL}}"
+                 alt="profile photo" />
+            {{else}}
+            <div class="avatar">
+                <div class="w-24 rounded">
+                    <p>no profile photo</p>
+                </div>
+            </div>
+            {{end}}
+        </figure>
+        <div class="card-body">
+            <h2 class="card-title">{{.User.Name}}</h2>
+            <p>{{.User.Email}}</p>
+        </div>
+    </div>
+
+    <div>
+        <h2>Chats list</h2>
+        {{if .User.Chats}}
+        <div class="overflow-x-auto">
+            <table class="table">
+                <tbody>
+                    {{range .User.Chats}}
+                    <tr>
+                        <th>
+                            <button onclick="location.href='/ui/chats/{{.ID}}'">
+                                {{.Name}}
+                            </button>
+                        </th>
+                    </tr>
+                    {{end}}
+                </tbody>
+            </table>
+        </div>
+        {{else}}
+        <div>
+            no chats
+        </div>
+        {{end}}
+    </div>
+
+    <form method="">
+        <div>
+            <label for="profile-photo"
+                   class="block text-xs font-medium text-gray-700">
+                Edit photo
+            </label>
+            <input type="file"
+                   id="profile-photo"
+                   name="profile-photo"
+                   accept=".jpg, .jpeg, .png"
+                   class="mt-1 w-full rounded-md border-gray-200 shadow-sm sm:text-sm" />
+        </div>
+
+        <div id="preview">
+            <p>
+                no preview yet
+            </p>
+        </div>
+        <button class="btn btn-primary"
+                onclick="saveProfilePhoto()">Save</button>
+    </form>
+
+</div>
+
+<script>
+    const input = document.getElementById("profile-photo");
+    const preview = document.getElementById("preview")
+
+    input.addEventListener("change", updateImagePreview)
+
+    function updateImagePreview() {
+        while (preview.firstChild) {
+            preview.removeChild(preview.firstChild);
+        }
+
+        const uploadedFiles = input.files;
+        if (uploadedFiles.length === 0) {
+            const elem = document.createElement("p");
+            elem.textContent = "No files currently selected for upload";
+            preview.appendChild(elem);
+        } else {
+            const list = document.createElement("ol");
+            preview.appendChild(list);
+            for (const file of uploadedFiles) {
+                const listItem = document.createElement("li");
+                if (validFileType(file)) {
+                    const image = document.createElement("img");
+                    image.src = URL.createObjectURL(file);
+                    listItem.appendChild(image);
+                }
+                list.appendChild(listItem);
+            }
+        }
+    }
+
+    const fileTypes = [
+        "image/jpg",
+        "image/jpeg",
+        "image/png",
+    ];
+
+    function validFileType(file) {
+        return fileTypes.includes(file.type);
+    }
+
+    function returnFileSize(number) {
+        if (number < 1024) {
+            return `${number} bytes`;
+        } else if (number >= 1024 && number < 1048576) {
+            return `${(number / 1024).toFixed(1)} KB`;
+        } else if (number >= 1048576) {
+            return `${(number / 1048576).toFixed(1)} MB`;
+        }
+    }
+
+    function saveProfilePhoto() {
+        console.log("saveProfilePhoto")
+        const imageToUpload = input.files[0]
+
+        let formData = new FormData()
+        formData.append("image", imageToUpload)
+        let userID = "{{.User.ID}}"
+        console.log("userID=", userID)
+
+        fetch(`/api/users/${userID}/avatar`, {
+            method: "POST",
+            body: formData
+        })
+    }
+
+</script>
