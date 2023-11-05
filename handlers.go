@@ -1,11 +1,8 @@
 package main
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
-	"html/template"
-	"io"
 	"log"
 	"os"
 
@@ -78,9 +75,12 @@ func getUserResponse(user User) UserResponse {
 }
 
 func ChatView(c *fiber.Ctx) error {
-	chatID, err := c.ParamsInt("chatId")
+	chatID, err := c.ParamsInt("chatId", -1)
 	if err != nil {
 		return err
+	}
+	if chatID == -1 {
+		return errors.New("chatId param missing in URL")
 	}
 	var chat Chat
 	tx := DB.Preload("Members").Where("id = ?", chatID).Preload("Messages.From").First(&chat)
@@ -89,33 +89,36 @@ func ChatView(c *fiber.Ctx) error {
 	}
 	var user User
 	// todo: implement current user functionality
-	DB.Take(&user)
+	tx = DB.Take(&user)
+	if tx.Error != nil {
+		return tx.Error
+	}
 
 	// TODO: why is this not working? is this a bug that fiber should fix
-	// return c.Render("chat", fiber.Map{
-	// 	"Chat": chat,
-	// 	"User": user,
-	// })
-
-	var buf bytes.Buffer
-	tmpl := template.Must(template.ParseFiles("templates/chat.html"))
-	data := fiber.Map{
+	return c.Render("chat", fiber.Map{
 		"Chat": chat,
 		"User": user,
-	}
-	err = tmpl.Execute(&buf, data)
-	if err != nil {
-		return err
-	}
+	})
 
-	bytes, err := io.ReadAll(&buf)
-	if err != nil {
-		return err
-	}
+	// var buf bytes.Buffer
+	// tmpl := template.Must(template.ParseFiles("templates/chat.html"))
+	// data := fiber.Map{
+	// 	"Chat": chat,
+	// 	"User": user,
+	// }
+	// err = tmpl.Execute(&buf, data)
+	// if err != nil {
+	// 	return err
+	// }
 
-	body := string(bytes)
+	// bytes, err := io.ReadAll(&buf)
+	// if err != nil {
+	// 	return err
+	// }
 
-	return c.SendString(body)
+	// body := string(bytes)
+
+	// return c.SendString(body)
 }
 
 func HomeView(c *fiber.Ctx) error {

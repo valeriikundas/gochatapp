@@ -14,6 +14,8 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/utils"
+	"github.com/gofiber/template/html/v2"
+	"github.com/valyala/fasthttp"
 	"gorm.io/gorm"
 )
 
@@ -123,4 +125,36 @@ func TestGetChatView(t *testing.T) {
 	utils.AssertEqual(t, fiber.StatusOK, resp.StatusCode)
 
 	// TODO: test html
+}
+
+func TestGetChatViewWithoutWholeApp(t *testing.T) {
+	engine := html.New("templates/", ".html")
+	app := fiber.New(fiber.Config{
+		Views:       engine,
+		ViewsLayout: "layouts/base",
+	})
+	app.Get("/:chatId", ChatView)
+	c := app.AcquireCtx(&fasthttp.RequestCtx{})
+	defer app.ReleaseCtx(c)
+
+	var clearDB func(*gorm.DB) error
+	DB, clearDB = prepareTestDb(t)
+	defer clearDB(DB)
+
+	users, err := addRandomUsers(DB, 10)
+	utils.AssertEqual(t, nil, err)
+
+	log.Printf("%v\n", len(users))
+
+	chat, err := addRandomChat(DB)
+	utils.AssertEqual(t, nil, err)
+
+	resp, err := app.Test(httptest.NewRequest(fiber.MethodGet, fmt.Sprintf("/%d", chat.ID), nil))
+	utils.AssertEqual(t, nil, err)
+	utils.AssertEqual(t, fiber.StatusOK, resp.StatusCode, "Status code")
+
+	bytes, err := io.ReadAll(resp.Body)
+	utils.AssertEqual(t, nil, err)
+
+	log.Printf("%v\n", string(bytes))
 }

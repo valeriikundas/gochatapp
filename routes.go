@@ -3,7 +3,7 @@ package main
 import "github.com/gofiber/fiber/v2"
 
 func setupRoutes(app *fiber.App) {
-	app.Add(fiber.MethodGet, "/", RootHandler)
+	app.Get("/", RootHandler)
 
 	api := app.Group("/api")
 	ui := app.Group("/ui")

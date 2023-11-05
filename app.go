@@ -62,3 +62,6 @@ func main() {
 // TODO: use github copilot free trial
 // TODO: is it useful? https://github.com/bluele/factory-go
 // TODO: setting up db for tests - setup, teardown - in other projects
+// TODO: setup database migrations
+// TODO: try https://github.com/sqlc-dev/sqlc and maybe benchmark
+// TODO: review templates e.g https://github.com/create-go-app/fiber-go-template/tree/master and others
