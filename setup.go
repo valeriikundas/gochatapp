@@ -40,6 +40,7 @@ func createApp(db *gorm.DB) *fiber.App {
 	htmlEngine := html.New("templates/", ".html")
 
 	app := fiber.New(fiber.Config{
+		AppName:     "GoChatApp",
 		Views:       htmlEngine,
 		ViewsLayout: "layouts/base",
 		// Global custom error handler

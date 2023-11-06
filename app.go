@@ -37,6 +37,7 @@ func main() {
 
 // TODO: use tdd, coverage to >90%
 // TODO: add auth https://medium.com/@abhinavv.singh/a-comprehensive-guide-to-authentication-and-authorization-in-go-golang-6f783b4cea18
+// TODO: use JWT tokens
 // TODO: in general writing a chat app
 // TODO: write a signup in tdd fashion
 // TODO: add cache (e.g. redis)
@@ -64,6 +65,7 @@ func main() {
 // TODO: setting up db for tests - setup, teardown - in other projects
 // TODO: setup database migrations
 // TODO: try https://github.com/sqlc-dev/sqlc and maybe benchmark
+// TODO: write raw SQL query
 // TODO: review templates e.g https://github.com/create-go-app/fiber-go-template/tree/master and others
 // TODO: try supabase
 // TODO: add payments
