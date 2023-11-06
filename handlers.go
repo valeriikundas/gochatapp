@@ -74,6 +74,14 @@ func getUserResponse(user User) UserResponse {
 	}
 }
 
+func getUsersResponse(users []User) []UserResponse {
+	usersResponse := make([]UserResponse, len(users))
+	for i := 0; i < len(users); i += 1 {
+		usersResponse[i] = getUserResponse(users[i])
+	}
+	return usersResponse
+}
+
 func ChatView(c *fiber.Ctx) error {
 	chatID, err := c.ParamsInt("chatId", -1)
 	if err != nil {
@@ -87,6 +95,12 @@ func ChatView(c *fiber.Ctx) error {
 	if tx.Error != nil {
 		return tx.Error
 	}
+
+	chatResponse := ChatResponse{
+		Name:    chat.Name,
+		Members: getUsersResponse(chat.Members),
+	}
+
 	var user User
 	// todo: implement current user functionality
 	tx = DB.Take(&user)
@@ -94,9 +108,11 @@ func ChatView(c *fiber.Ctx) error {
 		return tx.Error
 	}
 
-	// TODO: why is this not working? is this a bug that fiber should fix
+	// FIXME: if I pass `User` but with other fields and `layout` present, it
+	// does not throw an error, but it should. needs deeper look into fiber
+	// source code
 	return c.Render("chat", fiber.Map{
-		"Chat": chat,
+		"Chat": chatResponse,
 		"User": user,
 	})
 
@@ -169,6 +185,12 @@ type UserResponse struct {
 	Name      string
 	Email     string
 	AvatarURL string
+}
+
+type ChatResponse struct {
+	Name     string
+	Members  []UserResponse
+	Messages []Message
 }
 
 func GetUser(c *fiber.Ctx) error {
