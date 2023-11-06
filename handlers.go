@@ -28,13 +28,8 @@ func UsersView(c *fiber.Ctx) error {
 		return err
 	}
 
-	usersResponse := make([]UserResponse, len(users))
-	for i := 0; i < len(users); i += 1 {
-		usersResponse[i] = getUserResponse(users[i])
-	}
-
 	return c.Render("users", fiber.Map{
-		"Users": usersResponse,
+		"Users": users,
 	})
 }
 
@@ -51,35 +46,8 @@ func UserView(c *fiber.Ctx) error {
 	}
 
 	return c.Render("user", fiber.Map{
-		"User": getUserResponse(user),
+		"User": user,
 	})
-}
-
-// TODO: don't like this name
-func getUserResponse(user User) UserResponse {
-	var avatarURL string
-	if user.AvatarFileName != "" {
-		log.Printf("avatarFilePath=%v\n", user.AvatarFileName)
-		avatarURL = fmt.Sprintf("/%s", user.AvatarFileName)
-		log.Printf("avatarURL=%v\n", avatarURL)
-	} else {
-		avatarURL = ""
-	}
-
-	return UserResponse{
-		ID:        user.ID,
-		Name:      user.Name,
-		Email:     user.Email,
-		AvatarURL: avatarURL,
-	}
-}
-
-func getUsersResponse(users []User) []UserResponse {
-	usersResponse := make([]UserResponse, len(users))
-	for i := 0; i < len(users); i += 1 {
-		usersResponse[i] = getUserResponse(users[i])
-	}
-	return usersResponse
 }
 
 func ChatView(c *fiber.Ctx) error {
@@ -96,11 +64,6 @@ func ChatView(c *fiber.Ctx) error {
 		return tx.Error
 	}
 
-	chatResponse := ChatResponse{
-		Name:    chat.Name,
-		Members: getUsersResponse(chat.Members),
-	}
-
 	var user User
 	// todo: implement current user functionality
 	tx = DB.Take(&user)
@@ -112,7 +75,7 @@ func ChatView(c *fiber.Ctx) error {
 	// does not throw an error, but it should. needs deeper look into fiber
 	// source code
 	return c.Render("chat", fiber.Map{
-		"Chat": chatResponse,
+		"Chat": chat,
 		"User": user,
 	})
 
@@ -143,10 +106,6 @@ func HomeView(c *fiber.Ctx) error {
 	})
 }
 
-type UsersResponse struct {
-	Users []UserResponse
-}
-
 func getUsers() ([]User, error) {
 	var users []User
 	tx := DB.Find(&users)
@@ -163,16 +122,9 @@ func GetUsers(c *fiber.Ctx) error {
 		return err
 	}
 
-	usersResponse := make([]UserResponse, len(users))
-	for i := 0; i < len(users); i += 1 {
-		usersResponse[i] = getUserResponse(users[i])
-	}
-
-	data := UsersResponse{
-		Users: usersResponse,
-	}
-
-	bytes, err := json.MarshalIndent(data, "", "  ")
+	bytes, err := json.MarshalIndent(fiber.Map{
+		"Users": users,
+	}, "", "  ")
 	if err != nil {
 		return err
 	}
@@ -204,18 +156,8 @@ func GetUser(c *fiber.Ctx) error {
 		return tx.Error
 	}
 
-	log.Printf("avatarFilePath=%v\n", user.AvatarFileName)
-	avatarURL := fmt.Sprintf("/images/%s", user.AvatarFileName)
-	log.Printf("avatarURL=%v\n", avatarURL)
-
-	userResponse := UserResponse{
-		Name:      user.Name,
-		Email:     user.Email,
-		AvatarURL: avatarURL,
-	}
-
 	response := map[string]any{
-		"User": userResponse,
+		"User": user,
 	}
 	bytes, err := json.MarshalIndent(response, "", "  ")
 	if err != nil {
@@ -357,7 +299,7 @@ func UploadUserAvatar(c *fiber.Ctx) error {
 	}
 
 	userID := c.Params("userID")
-	tx := DB.Model(&User{}).Where("id = ?", userID).Update("AvatarFileName", fileName)
+	tx := DB.Model(&User{}).Where("id = ?", userID).Update("AvatarURL", fmt.Sprintf("/%s", fileName))
 	if tx.Error != nil {
 		return tx.Error
 	}

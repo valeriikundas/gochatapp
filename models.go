@@ -5,9 +5,11 @@ import "gorm.io/gorm"
 type User struct {
 	gorm.Model
 
-	Name           string `gorm:"uniqueIndex" validate:"required"`
-	Email          string `gorm:"uniqueIndex" validate:"required"`
-	AvatarFileName string `gorm:"uniqueIndex;default:null"`
+	Name  string `gorm:"uniqueIndex" validate:"required"`
+	Email string `gorm:"uniqueIndex" validate:"required"`
+
+	// TODO: add `images` prefix e.g. `images/{filename}.jpg` to this url
+	AvatarURL string `gorm:"uniqueIndex;default:null"`
 
 	Chats []Chat `gorm:"many2many:chat_members"`
 

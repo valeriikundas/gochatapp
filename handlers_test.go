@@ -55,7 +55,9 @@ func TestGetUsers(t *testing.T) {
 	bytes, err := io.ReadAll(resp.Body)
 	utils.AssertEqual(t, nil, err)
 
-	var data UsersResponse
+	var data struct {
+		Users []User
+	}
 	json.Unmarshal(bytes, &data)
 	utils.AssertEqual(t, len(users), len(data.Users))
 	utils.AssertEqual(t, users[0].Name, data.Users[0].Name)
@@ -104,7 +106,7 @@ func TestUploadUserAvatar(t *testing.T) {
 	utils.AssertEqual(t, nil, tx.Error)
 
 	// TODO: currently saves into the same repo as prod `uploads`, would be better to make a temporary repo
-	utils.AssertEqual(t, fileName, resultUser.AvatarFileName)
+	utils.AssertEqual(t, fmt.Sprintf("/%s", fileName), resultUser.AvatarURL)
 }
 
 func TestGetChatsView(t *testing.T) {
