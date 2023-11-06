@@ -19,6 +19,27 @@ import (
 	"gorm.io/gorm"
 )
 
+func testStatus200(t *testing.T, app *fiber.App, url, method string) {
+	t.Helper()
+
+	req := httptest.NewRequest(method, url, nil)
+
+	resp, err := app.Test(req)
+	utils.AssertEqual(t, nil, err, "app.Test(req)")
+	utils.AssertEqual(t, 200, resp.StatusCode, "Status code")
+}
+
+func testErrorResponse(t *testing.T, err error, resp *http.Response, expectedBodyError string) {
+	t.Helper()
+
+	utils.AssertEqual(t, nil, err, "app.Test(req)")
+	utils.AssertEqual(t, 500, resp.StatusCode, "Status code")
+
+	body, err := io.ReadAll(resp.Body)
+	utils.AssertEqual(t, nil, err)
+	utils.AssertEqual(t, expectedBodyError, string(body), "Response body")
+}
+
 func TestGetUsers(t *testing.T) {
 	var clearDB func(*gorm.DB) error
 	DB, clearDB = prepareTestDb(t)
@@ -99,9 +120,7 @@ func TestGetChatsView(t *testing.T) {
 	chat, err := addRandomChat(DB)
 	utils.AssertEqual(t, nil, err)
 
-	resp, err := app.Test(httptest.NewRequest(fiber.MethodGet, "/ui/chats/", nil))
-	utils.AssertEqual(t, nil, err)
-	utils.AssertEqual(t, fiber.StatusOK, resp.StatusCode)
+	testStatus200(t, app, "/ui/chats", fiber.MethodGet)
 
 	// TODO: search chat name and users in html
 	log.Printf("chat=%v\n", chat)

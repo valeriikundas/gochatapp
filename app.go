@@ -65,3 +65,10 @@ func main() {
 // TODO: setup database migrations
 // TODO: try https://github.com/sqlc-dev/sqlc and maybe benchmark
 // TODO: review templates e.g https://github.com/create-go-app/fiber-go-template/tree/master and others
+// TODO: try supabase
+// TODO: add payments
+// TODO: implement rate limiting and maybe some more features from distributed applications :)
+// TODO: try planetscale database
+// TODO: structure logging https://pkg.go.dev/golang.org/x/exp/slog
+// TODO: setup sentry or some other monitoring
+// TODO: try rpc, grpc, webrtc
