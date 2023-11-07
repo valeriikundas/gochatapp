@@ -82,3 +82,4 @@ func main() {
 // TODO: try rpc, grpc, webrtc
 // TODO: setup linter for function length and code complexity
 // TODO: setup load testing https://github.com/tsenart/vegeta
+// TODO: add api versioning

@@ -18,8 +18,8 @@ func setupRoutes(app *fiber.App) {
 
 	api.Get("/users", GetUsers)
 	api.Get("/users/:userID", GetUser)
-	api.Post("/user", CreateUser)
+	api.Post("/users", CreateUser)
 	api.Get("/chats", GetChats)
-	api.Post("/chat/:chatID", SendMessage)
+	api.Post("/chats/:chatID", SendMessage)
 	api.Post("/users/:userID/avatar", UploadUserAvatar)
 }

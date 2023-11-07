@@ -42,42 +42,54 @@
     </details>
 </div>
 
-<!-- TODO: implement messages UI -->
-{{if .Chat.Messages}}
-<table>
-    {{range .Chat.Messages}}
-    <tr>
-        <td>{{.From.Name}}</td>
-        <td>{{.Content}}</td>
-    </tr>
-    {{end}}
-</table>
-{{else}}
-<h6>chat is empty</h6>
-{{end}}
+<div class="overflow-x-auto">
+    <table class="table table-xs">
+        <thead>
+            <tr>
+                <th class="w-40">Sent at</th>
+                <th class="w-40">Name</th>
+                <th>Message</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{range .Chat.Messages}}
+            <tr>
+                <td>{{.CreatedAt.Format "02 Jan 06 15:04 MST"}}</td>
+                <td>{{.From.Name}}</td>
+                <td>{{.Content}}</td>
+            </tr>
+            {{end}}
+        </tbody>
+    </table>
+</div>
 
 
 <script>
     function sendMessage() {
         let message = document.getElementById("message").value
-        console.log("message=", message)
-        alert(message)
 
-        $.post("/api/chat/{{.Chat.ID}}", {
-            fromID: "{{.User.ID}}",
-            content: message,
+        $.ajax({
+            url: "/api/chats/{{.Chat.ID}}",
+            type: "POST",
+            data: {
+                fromID: "{{.User.ID}}",
+                content: message,
+            },
+            dataType: "json",
         })
+
+        location.reload()
     }
 </script>
 
-<form action=""
-      method="POST">
-    <input type="text"
-           id="message"
-           name="message"
-           placeholder="write..."
-           required />
-    <input type="button"
-           value="Send"
-           onclick="sendMessage()" />
+<form>
+    <div class="container mx-auto flex items-center justify-center content-center my-6">
+        <textarea class="textarea textarea-bordered "
+                  id="message"
+                  name="message"
+                  placeholder="write..."></textarea>
+        <button value="Submit"
+                onclick="sendMessage()"
+                class="btn btn-primary btn-wide mx-8">Send</button>
+    </div>
 </form>

@@ -50,6 +50,13 @@ func UserView(c *fiber.Ctx) error {
 }
 
 func ChatView(c *fiber.Ctx) error {
+	// TODONEXT:
+	// TODO: pretty chat view
+	// TODO: join chat feature
+	// TODO: send message feature
+	// TODO: leave chat feature
+	// TODO: bots that talk live
+
 	chatID, err := c.ParamsInt("chatId", -1)
 	if err != nil {
 		return err
@@ -231,8 +238,16 @@ type SendMessageRequest struct {
 }
 
 func SendMessage(c *fiber.Ctx) error {
+	chatID, err := c.ParamsInt("chatId", -1)
+	if err != nil {
+		return err
+	}
+	if chatID == -1 {
+		return errors.New("missing chatId param")
+	}
+
 	var data SendMessageRequest
-	err := c.BodyParser(&data)
+	err = c.BodyParser(&data)
 	if err != nil {
 		return errors.Wrap(err, "BodyParser failed")
 	}
@@ -252,7 +267,7 @@ func SendMessage(c *fiber.Ctx) error {
 	}
 
 	message := Message{
-		ChatID:  data.ChatID,
+		ChatID:  uint(chatID),
 		FromID:  data.FromID,
 		Content: data.Content,
 	}
