@@ -67,7 +67,7 @@ func main() {
 // TODO: use goroutines somewhere
 // TODO: play around and debug internaly of fiber, gorm, docker etc
 // TODO: use github copilot free trial
-// TODO: is it useful? https://github.com/bluele/factory-go
+// TODO: use factories for tests. is it useful in golang? https://github.com/bluele/factory-go
 // TODO: setting up db for tests - setup, teardown - in other projects
 // TODO: setup database migrations
 // TODO: try https://github.com/sqlc-dev/sqlc and maybe benchmark
@@ -81,3 +81,4 @@ func main() {
 // TODO: setup sentry or some other monitoring
 // TODO: try rpc, grpc, webrtc
 // TODO: setup linter for function length and code complexity
+// TODO: setup load testing https://github.com/tsenart/vegeta
