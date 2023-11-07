@@ -1,20 +1,30 @@
 <div class="navbar bg-base-100">
+   {{if not .CurrentUser}}
    <a class="btn btn-ghost normal-case text-xl"
       onclick="location.href='/ui/login'">Login</a>
+   {{end}}
+   {{if .CurrentUser}}
    <a class="btn btn-ghost normal-case text-xl"
       onclick="logout()">Logout</a>
+   {{end}}
    <a class="btn btn-ghost normal-case text-xl"
       onclick="location.href='/ui/users'">Users</a>
    <a class="btn btn-ghost normal-case text-xl"
-      onclick="location.href='/ui/chats'">
-      Chats</a>
+      onclick="location.href='/ui/chats/all'">
+      All Chats</a>
+
+   {{if .CurrentUser}}
+   <a class="btn btn-ghost normal-case text-xl"
+      onclick="location.href='/ui/users/{{.CurrentUser.ID}}/chats'">
+      My Chats</a>
+   {{end}}
 </div>
 
 <div>
    <h4>
       Current user:
       <span id="currentUser">
-         {{ .CurrentUser }}
+         {{ .CurrentUser.Email }}
       </span>
    </h4>
 </div>

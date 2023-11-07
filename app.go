@@ -83,3 +83,4 @@ func main() {
 // TODO: setup linter for function length and code complexity
 // TODO: setup load testing https://github.com/tsenart/vegeta
 // TODO: add api versioning
+// TODO: try out many of fiber middlewares

@@ -1,39 +1,43 @@
-<div>hello {{.User.ID}}</div>
-
-<div>
-    <!-- todo: show chats, that belong to user only -->
+<div class="overflow-x-auto">
     <h2>Chats list</h2>
-    <table>
-        {{range .Chats}}
-        <tr>
-            <td>
-
-                {{.Name}}
-
-            </td>
-            <td>
-                <ul>
-                    {{range .Members}}
-                    {{if .Name}}
-                    <li>{{.Name}}</li>
-                    {{else}}
-                    <li>{{.Email}}</li>
-                    {{end}}
-                    {{end}}
-                </ul>
-            </td>
-            <td>
-                <button onclick="joinChat({{.ID}})"
-                        class="btn">Join</button>
-            </td>
-            <td>
-                <button onclick="viewChat({{.ID}})"
-                        class="btn ">View</button>
-            </td>
-        </tr>
-        {{end}}
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Chat name</th>
+                <th>Members</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            {{range .Chats}}
+            <tr>
+                <td>
+                    {{.Name}}
+                </td>
+                <td>
+                    <ul>
+                        {{range .Members}}
+                        {{if .Name}}
+                        <li>{{.Name}}</li>
+                        {{else}}
+                        <li>{{.Email}}</li>
+                        {{end}}
+                        {{end}}
+                    </ul>
+                </td>
+                <td class="flex">
+                    <!-- TODO: hide `joinChat` button if I belong to this chat -->
+                    <button onclick="joinChat({{.ID}})"
+                            class="btn">Join</button>
+                    <button onclick="viewChat({{.ID}})"
+                            class="btn">View</button>
+                </td>
+            </tr>
+            {{end}}
+        </tbody>
     </table>
 </div>
+
 <script>
     function joinChat(chatID) {
         // TODO: store `userID` in cookies, later authorization token

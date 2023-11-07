@@ -13,7 +13,7 @@ import (
 
 // TODO: split ui and api handlers
 
-func ChatsView(c *fiber.Ctx) error {
+func AllChatsView(c *fiber.Ctx) error {
 	var chats []Chat
 	tx := DB.Model(&Chat{}).Preload("Members").Find(&chats)
 	if tx.Error != nil {
@@ -36,7 +36,34 @@ func ChatsView(c *fiber.Ctx) error {
 
 	return c.Render("chats", fiber.Map{
 		"Chats": chats,
-		"User":  user,
+		// TODO: is `User` needed in ui?
+		"User": user,
+	})
+}
+
+func UserChatsView(c *fiber.Ctx) error {
+	// TODO: use `session` middleware instead of raw cookies
+
+	var cookie struct {
+		Authorization string
+	}
+	err := c.CookieParser(&cookie)
+	if err != nil {
+		return errors.Wrap(err, "CookieParser")
+	}
+
+	userEmail := cookie.Authorization
+
+	var user User
+	err = DB.Preload("Chats").Where("Email = ?", userEmail).First(&user).Error
+	if err != nil {
+		return errors.Wrap(err, "Get user by email")
+	}
+
+	userChats := user.Chats
+
+	return c.Render("chats", fiber.Map{
+		"Chats": userChats,
 	})
 }
 
@@ -143,8 +170,25 @@ func ChatView(c *fiber.Ctx) error {
 }
 
 func HomeView(c *fiber.Ctx) error {
+	var cookie struct {
+		Authorization string
+	}
+	err := c.CookieParser(&cookie)
+	if err != nil {
+		return errors.Wrap(err, "CookieParser")
+	}
+
+	var currentUser *User
+	if cookie.Authorization != "" {
+		userEmail := cookie.Authorization
+		err = DB.Where("Email = ?", userEmail).First(&currentUser).Error
+		if err != nil {
+			return errors.Wrap(err, "Get user by email")
+		}
+	}
+
 	return c.Render("home", fiber.Map{
-		"a": "b",
+		"CurrentUser": currentUser,
 	})
 }
 
@@ -354,6 +398,7 @@ func PostLoginView(c *fiber.Ctx) error {
 	var user *User
 	tx := DB.Where("Email = ?", data.Email).First(&user)
 	if errors.Is(tx.Error, gorm.ErrRecordNotFound) {
+		// NOTE: creating user if it does not exist for v1
 		createdUser := User{
 			Email:    data.Email,
 			Password: data.Password,
