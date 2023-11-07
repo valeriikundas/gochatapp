@@ -5,8 +5,11 @@ import "gorm.io/gorm"
 type User struct {
 	gorm.Model
 
-	Name  string `gorm:"uniqueIndex" validate:"required"`
+	Name string `validate:"required"`
+
 	Email string `gorm:"uniqueIndex" validate:"required"`
+	// TODO: for now without hashing :)
+	Password string
 
 	// TODO: add `images` prefix e.g. `images/{filename}.jpg` to this url
 	// TODO: use random name for file names

@@ -8,7 +8,10 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	"github.com/pkg/errors"
+	"gorm.io/gorm"
 )
+
+// TODO: split ui and api handlers
 
 func ChatsView(c *fiber.Ctx) error {
 	var chats []Chat
@@ -16,8 +19,24 @@ func ChatsView(c *fiber.Ctx) error {
 	if tx.Error != nil {
 		return tx.Error
 	}
+
+	var cookie struct {
+		Authorization string
+	}
+	err := c.CookieParser(&cookie)
+	if err != nil {
+		return errors.Wrap(err, "CookieParser")
+	}
+
+	var user User
+	tx = DB.Where("Email = ?", cookie.Authorization).First(&user)
+	if tx.Error != nil {
+		return errors.Wrap(tx.Error, "User not found")
+	}
+
 	return c.Render("chats", fiber.Map{
 		"Chats": chats,
+		"User":  user,
 	})
 }
 
@@ -51,7 +70,8 @@ func UserView(c *fiber.Ctx) error {
 
 func ChatView(c *fiber.Ctx) error {
 	// TODONEXT:
-	// TODO: pretty chat view
+	// TODO: select current user feature
+	// TODO: disallow sending message if user has not joined the chat?
 	// TODO: join chat feature
 	// TODO: send message feature
 	// TODO: leave chat feature
@@ -70,11 +90,25 @@ func ChatView(c *fiber.Ctx) error {
 		return tx.Error
 	}
 
-	var user User
-	// todo: implement current user functionality
-	tx = DB.Take(&user)
-	if tx.Error != nil {
-		return tx.Error
+	var cookie struct {
+		Authorization string
+	}
+	err = c.CookieParser(&cookie)
+	if err != nil {
+		return err
+	}
+
+	log.Printf("out=%+v auth=%v\n", cookie, cookie.Authorization)
+
+	var user *User
+	if cookie.Authorization != "" {
+		// todo: implement current user functionality
+		tx = DB.Where("Email = ?", cookie.Authorization).First(&user)
+		if errors.Is(tx.Error, gorm.ErrRecordNotFound) {
+			return errors.Wrap(tx.Error, "User not found")
+		} else if tx.Error != nil {
+			return tx.Error
+		}
 	}
 
 	// FIXME: if I pass `User` but with other fields and `layout` present, it
@@ -84,6 +118,8 @@ func ChatView(c *fiber.Ctx) error {
 		"Chat": chat,
 		"User": user,
 	})
+
+	// NOTE: below is a code that makes failing template realy fail
 
 	// var buf bytes.Buffer
 	// tmpl := template.Must(template.ParseFiles("templates/chat.html"))
@@ -232,18 +268,25 @@ func GetChats(c *fiber.Ctx) error {
 }
 
 type SendMessageRequest struct {
-	FromID  uint
-	ChatID  uint
-	Content string
+	UserEmail string
+	Content   string
 }
 
 func SendMessage(c *fiber.Ctx) error {
-	chatID, err := c.ParamsInt("chatId", -1)
+	var params struct {
+		ChatID int
+	}
+	err := c.ParamsParser(&params)
 	if err != nil {
 		return err
 	}
-	if chatID == -1 {
-		return errors.New("missing chatId param")
+
+	var cookie struct {
+		Authorization string
+	}
+	err = c.CookieParser(&cookie)
+	if err != nil {
+		return err
 	}
 
 	var data SendMessageRequest
@@ -266,12 +309,19 @@ func SendMessage(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(errors)
 	}
 
+	userEmail := cookie.Authorization
+	var user User
+	tx := DB.Where("Email = ?", userEmail).First(&user)
+	if tx.Error != nil {
+		return tx.Error
+	}
+
 	message := Message{
-		ChatID:  uint(chatID),
-		FromID:  data.FromID,
+		ChatID:  uint(params.ChatID),
+		FromID:  user.ID,
 		Content: data.Content,
 	}
-	tx := DB.Create(&message)
+	tx = DB.Create(&message)
 
 	if tx.Error != nil {
 		logger.Errorf("er=%v\n", tx.Statement.Error)
@@ -285,6 +335,43 @@ func SendMessage(c *fiber.Ctx) error {
 
 func RootHandler(c *fiber.Ctx) error {
 	return c.Redirect("/ui", fiber.StatusPermanentRedirect)
+}
+
+func LoginView(c *fiber.Ctx) error {
+	return c.Render("login", fiber.Map{})
+}
+
+func PostLoginView(c *fiber.Ctx) error {
+	var data struct {
+		Email    string
+		Password string
+	}
+	err := c.BodyParser(&data)
+	if err != nil {
+		return err
+	}
+
+	var user *User
+	tx := DB.Where("Email = ?", data.Email).First(&user)
+	if errors.Is(tx.Error, gorm.ErrRecordNotFound) {
+		createdUser := User{
+			Email:    data.Email,
+			Password: data.Password,
+		}
+		tx := DB.Create(&createdUser)
+		if tx.Error != nil {
+			return tx.Error
+		}
+		return c.Render("home", fiber.Map{
+			"CurrentUser": createdUser,
+		})
+	} else if tx.Error != nil {
+		return tx.Error
+	}
+
+	return c.Render("home", fiber.Map{
+		"CurrentUser": user,
+	})
 }
 
 func UploadUserAvatar(c *fiber.Ctx) error {
@@ -316,4 +403,47 @@ func UploadUserAvatar(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"status": "ok",
 	})
+}
+
+func JoinChat(c *fiber.Ctx) error {
+	var body struct {
+		Email string
+	}
+
+	err := c.BodyParser(&body)
+	if err != nil {
+		return errors.Wrap(err, "BodyParser")
+	}
+
+	var user User
+	tx := DB.Where("Email = ?", body.Email).First(&user)
+	if tx.Error != nil {
+		return errors.Wrap(tx.Error, "Filter User by Email")
+	}
+
+	var params struct {
+		ChatID uint
+	}
+	err = c.ParamsParser(&params)
+	if err != nil {
+		return errors.Wrap(err, "ParamsParser")
+	}
+
+	var chat Chat
+	tx = DB.Find(&chat, params.ChatID)
+	if tx.Error != nil {
+		return errors.Wrap(tx.Error, "Find Chat by ID")
+	}
+
+	err = DB.Model(&chat).Association("Members").Append(&user)
+	if err != nil {
+		return errors.Wrap(err, "Chat appends member")
+	}
+
+	err = DB.Save(&user).Error
+	if err != nil {
+		return errors.Wrap(err, "Save Chat after Members Update")
+	}
+
+	return nil
 }

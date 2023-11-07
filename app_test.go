@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"math"
+	"net/http"
 	"net/http/httptest"
 	"testing"
 
@@ -62,33 +63,42 @@ func TestSendMessage(t *testing.T) {
 	user, err := addRandomUser(DB, false)
 	utils.AssertEqual(t, nil, err)
 
-	chat, err := addRandomChat(DB)
+	chat, err := addRandomChatWithNoUsers(DB)
 	utils.AssertEqual(t, nil, err)
+
+	err = DB.Model(&chat).Association("Members").Append(&user)
+	utils.AssertEqual(t, nil, err, "Chat add Member")
+	err = DB.Save(&chat).Error
+	utils.AssertEqual(t, nil, err, "Chat save after add Member")
 
 	buf := new(bytes.Buffer)
 	messageContent := "hello"
 	data := SendMessageRequest{
-		FromID:  user.ID,
-		ChatID:  chat.ID,
-		Content: messageContent,
+		UserEmail: user.Email,
+		Content:   messageContent,
 	}
 	err = json.NewEncoder(buf).Encode(data)
 	utils.AssertEqual(t, nil, err)
 
-	req := httptest.NewRequest(fiber.MethodPost, fmt.Sprintf("/api/chat/%d", chat.ID), buf)
+	req := httptest.NewRequest(fiber.MethodPost, fmt.Sprintf("/api/chats/%d", chat.ID), buf)
 	req.Header.Set("Content-Type", "application/json")
+	req.AddCookie(&http.Cookie{
+		Name:  "Authorization",
+		Value: user.Email,
+		Path:  "/",
+	})
 	resp, err := app.Test(req)
 	utils.AssertEqual(t, nil, err)
+	utils.AssertEqual(t, fiber.StatusOK, resp.StatusCode, "Status code")
 
 	bytes2, err := io.ReadAll(resp.Body)
 	utils.AssertEqual(t, nil, err)
-	utils.AssertEqual(t, fiber.StatusOK, resp.StatusCode)
 
 	var sendMessageResponse struct {
 		ID uint
 	}
 	err = json.Unmarshal(bytes2, &sendMessageResponse)
-	utils.AssertEqual(t, nil, err)
+	utils.AssertEqual(t, nil, err, fmt.Sprintf("%+v", sendMessageResponse))
 
 	var message Message
 	tx := DB.Find(&message)

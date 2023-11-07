@@ -1,7 +1,28 @@
-<div>
-    <button onclick="location.href='/ui/users'">Users</button>
+<div class="navbar bg-base-100">
+   <a class="btn btn-ghost normal-case text-xl"
+      onclick="location.href='/ui/login'">Login</a>
+   <a class="btn btn-ghost normal-case text-xl"
+      onclick="logout()">Logout</a>
+   <a class="btn btn-ghost normal-case text-xl"
+      onclick="location.href='/ui/users'">Users</a>
+   <a class="btn btn-ghost normal-case text-xl"
+      onclick="location.href='/ui/chats'">
+      Chats</a>
 </div>
-<br />
+
 <div>
-    <button onclick="location.href='/ui/chats'">Chats</button>
+   <h4>
+      Current user:
+      <span id="currentUser">
+         {{ .CurrentUser }}
+      </span>
+   </h4>
 </div>
+
+<script>
+   function logout() {
+      // TODO: implement logout in UI
+      alert("logout")
+   }
+
+</script>

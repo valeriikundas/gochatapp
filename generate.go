@@ -83,7 +83,18 @@ func addRandomUsers(db *gorm.DB, n int) ([]User, error) {
 	return users, nil
 }
 
-func addRandomChat(db *gorm.DB) (*Chat, error) {
+func addRandomChatWithNoUsers(db *gorm.DB) (*Chat, error) {
+	chat := Chat{
+		Name: strings.Join([]string{gofakeit.MovieName(), gofakeit.BookTitle(), gofakeit.Country()}, " - "),
+	}
+	tx := db.Create(&chat)
+	if tx.Error != nil {
+		return nil, tx.Error
+	}
+	return &chat, nil
+}
+
+func addRandomChatWithUsers(db *gorm.DB) (*Chat, error) {
 	var users []User
 	tx := db.Find(&users)
 	if tx.Error != nil {
@@ -116,7 +127,7 @@ func generateRandomChats(t *testing.T, db *gorm.DB) error {
 	k := 100
 	chatData := make([]Chat, k)
 	for i := 0; i < k; i += 1 {
-		chat, err := addRandomChat(db)
+		chat, err := addRandomChatWithUsers(db)
 		if t == nil {
 			if err != nil {
 				return err

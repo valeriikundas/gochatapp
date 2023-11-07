@@ -1,3 +1,5 @@
+<h1>Current user: <span id="currentUser"></span></h1>
+
 <h1 class="text-3xl">{{.Chat.Name}}</h1>
 
 <div>
@@ -55,7 +57,13 @@
             {{range .Chat.Messages}}
             <tr>
                 <td>{{.CreatedAt.Format "02 Jan 06 15:04 MST"}}</td>
-                <td>{{.From.Name}}</td>
+
+                {{if .From.Name}}
+                <td>{{.From.Name }}</td>
+                {{else}}
+                <td>{{.From.Email}}</td>
+                {{end}}
+
                 <td>{{.Content}}</td>
             </tr>
             {{end}}
@@ -66,13 +74,16 @@
 
 <script>
     function sendMessage() {
+        let userEmail = document.cookie.split("; ").find(row => row.startsWith("Authorization="))?.split("=")[1]
+        console.log("AuthorizationCookie=", userEmail)
         let message = document.getElementById("message").value
 
+        // TODO: wrap template vars read with error handling
         $.ajax({
             url: "/api/chats/{{.Chat.ID}}",
             type: "POST",
             data: {
-                fromID: "{{.User.ID}}",
+                user: userEmail,
                 content: message,
             },
             dataType: "json",

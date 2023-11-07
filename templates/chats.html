@@ -1,3 +1,5 @@
+<div>hello {{.User.ID}}</div>
+
 <div>
     <!-- todo: show chats, that belong to user only -->
     <h2>Chats list</h2>
@@ -5,28 +7,47 @@
         {{range .Chats}}
         <tr>
             <td>
-                <div>
-                    {{.Name}}
-                </div>
+
+                {{.Name}}
+
             </td>
             <td>
-                {{range .Members}}
-                <div>{{.Name}}</div>
-                {{end}}
+                <ul>
+                    {{range .Members}}
+                    {{if .Name}}
+                    <li>{{.Name}}</li>
+                    {{else}}
+                    <li>{{.Email}}</li>
+                    {{end}}
+                    {{end}}
+                </ul>
             </td>
             <td>
-                <button onclick="joinChat()">join</button>
+                <button onclick="joinChat({{.ID}})"
+                        class="btn">Join</button>
             </td>
             <td>
-                <button onclick="viewChat({{.ID}})">view</button>
+                <button onclick="viewChat({{.ID}})"
+                        class="btn ">View</button>
             </td>
         </tr>
         {{end}}
     </table>
 </div>
 <script>
-    function joinChat() {
-        alert("todo: implement joinChat")
+    function joinChat(chatID) {
+        // TODO: store `userID` in cookies, later authorization token
+        const userEmail = document.cookie.split("; ").find(row => row.startsWith("Authorization"))?.split("=")[1]
+
+        console.log("userEmail chatId ", userEmail, chatID)
+
+        $.post({
+            url: `/api/chats/${chatID}/users/`,
+            dataType: "json",
+            data: {
+                email: userEmail
+            }
+        })
     }
 
     function viewChat(chatId) {

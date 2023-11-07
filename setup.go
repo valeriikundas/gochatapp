@@ -44,14 +44,13 @@ func createApp(db *gorm.DB) *fiber.App {
 		Views:       htmlEngine,
 		ViewsLayout: "layouts/base",
 		// Global custom error handler
-		// TODO: what i need there?
-		// ErrorHandler: func(c *fiber.Ctx, err error) error {
-		// 	log.Errorf("global error = %v\n", err.Error())
-		// 	return c.Status(fiber.StatusBadRequest).JSON(GlobalErrorHandlerResponse{
-		// 		Success: false,
-		// 		Message: err.Error(),
-		// 	})
-		// },
+		ErrorHandler: func(c *fiber.Ctx, err error) error {
+			log.Errorf("global error = %v\n", err.Error())
+			return c.Status(fiber.StatusBadRequest).JSON(GlobalErrorHandlerResponse{
+				Success: false,
+				Message: err.Error(),
+			})
+		},
 	})
 
 	app.Static("/", "uploads/", fiber.Static{})

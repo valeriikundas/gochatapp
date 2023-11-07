@@ -10,6 +10,8 @@ func setupRoutes(app *fiber.App) {
 
 	// TODO: rewrite UI endpoints to use API endpoints internally
 
+	ui.Get("/login", LoginView)
+	ui.Post("/login", PostLoginView)
 	ui.Get("/chats/:chatID", ChatView)
 	ui.Get("/chats", ChatsView)
 	ui.Get("/users", UsersView)
@@ -22,4 +24,5 @@ func setupRoutes(app *fiber.App) {
 	api.Get("/chats", GetChats)
 	api.Post("/chats/:chatID", SendMessage)
 	api.Post("/users/:userID/avatar", UploadUserAvatar)
+	api.Post("/chats/:chatId/users/", JoinChat)
 }

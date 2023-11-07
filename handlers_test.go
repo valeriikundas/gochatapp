@@ -109,7 +109,7 @@ func TestUploadUserAvatar(t *testing.T) {
 	utils.AssertEqual(t, fmt.Sprintf("/%s", fileName), resultUser.AvatarURL)
 }
 
-func TestGetChatsView(t *testing.T) {
+func TestChatsView(t *testing.T) {
 	var clearDB func(*gorm.DB) error
 	DB, clearDB = prepareTestDb(t)
 	defer clearDB(DB)
@@ -119,10 +119,19 @@ func TestGetChatsView(t *testing.T) {
 	utils.AssertEqual(t, nil, err)
 	utils.AssertEqual(t, 10, len(users))
 
-	chat, err := addRandomChat(DB)
+	chat, err := addRandomChatWithUsers(DB)
 	utils.AssertEqual(t, nil, err)
 
-	testStatus200(t, app, "/ui/chats", fiber.MethodGet)
+	user := users[0]
+	req := httptest.NewRequest(fiber.MethodGet, "/ui/chats", nil)
+	req.AddCookie(&http.Cookie{
+		Name:  "Authorization",
+		Value: user.Email,
+		Path:  "/",
+	})
+	resp, err := app.Test(req)
+	utils.AssertEqual(t, nil, err)
+	utils.AssertEqual(t, fiber.StatusOK, resp.StatusCode)
 
 	// TODO: search chat name and users in html
 	log.Printf("chat=%v\n", chat)
@@ -138,7 +147,7 @@ func TestGetChatView(t *testing.T) {
 	utils.AssertEqual(t, nil, err)
 	utils.AssertEqual(t, 10, len(users))
 
-	chat, err := addRandomChat(DB)
+	chat, err := addRandomChatWithUsers(DB)
 	utils.AssertEqual(t, nil, err)
 
 	resp, err := app.Test(httptest.NewRequest(fiber.MethodGet, fmt.Sprintf("/ui/chats/%d", chat.ID), nil))
@@ -168,7 +177,7 @@ func TestGetChatViewWithoutWholeApp(t *testing.T) {
 	// TODO: test
 	log.Printf("%v\n", len(users))
 
-	chat, err := addRandomChat(DB)
+	chat, err := addRandomChatWithUsers(DB)
 	utils.AssertEqual(t, nil, err)
 
 	resp, err := app.Test(httptest.NewRequest(fiber.MethodGet, fmt.Sprintf("/%d", chat.ID), nil))
@@ -180,4 +189,50 @@ func TestGetChatViewWithoutWholeApp(t *testing.T) {
 
 	// TODO: test
 	log.Printf("%v\n", string(bytes))
+}
+
+func TestJoinChat(t *testing.T) {
+	var clearDB func(*gorm.DB) error
+	DB, clearDB = prepareTestDb(t)
+	defer clearDB(DB)
+
+	app := createApp(DB)
+
+	user, err := addRandomUser(DB, false)
+	utils.AssertEqual(t, nil, err)
+
+	chat, err := addRandomChatWithNoUsers(DB)
+	utils.AssertEqual(t, nil, err)
+
+	chatsLenInitial := len(user.Chats)
+	data := struct {
+		Email string
+	}{
+		Email: user.Email,
+	}
+
+	jsonData, err := json.Marshal(data)
+	utils.AssertEqual(t, nil, err)
+
+	body := bytes.NewReader(jsonData)
+	req := httptest.NewRequest(fiber.MethodPost, fmt.Sprintf("/api/chats/%d/users", chat.ID), body)
+	req.Header.Set("Content-Type", "application/json")
+	resp, err := app.Test(req)
+	utils.AssertEqual(t, nil, err)
+	utils.AssertEqual(t, fiber.StatusOK, resp.StatusCode, "Status code")
+
+	var editedUser User
+	err = DB.Preload("Chats").Find(&editedUser, user.ID).Error
+	utils.AssertEqual(t, nil, err)
+
+	utils.AssertEqual(t, chatsLenInitial+1, len(editedUser.Chats), "len Chats did not change")
+
+	isChatFound := false
+	for _, chatIter := range editedUser.Chats {
+		if chatIter.ID == chat.ID {
+			isChatFound = true
+			break
+		}
+	}
+	utils.AssertEqual(t, true, isChatFound)
 }

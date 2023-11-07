@@ -21,12 +21,34 @@
     <!-- bootstrap is also as option 4 https://getbootstrap.com -->
 
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <script src="http://github.com/carhartl/jquery-cookie/zipball/v1.4.1"></script>
 </head>
 
 <body>
     <div class="container px-32">
         {{embed}}
     </div>
+
+    <script>
+        let currentUser = {{.CurrentUser }}
+        if (!currentUser) {
+            let item = localStorage.getItem("currentUser")
+            if (item) {
+                currentUser = JSON.parse(item)
+                console.log("parsed currentUser=", currentUser)
+            } else {
+                console.log("not logged in")
+            }
+        }
+
+        if (currentUser) {
+            localStorage.setItem("currentUser", JSON.stringify(currentUser))
+            // $.cookie("Authorization", , { expires: 7, path: "/" })
+            document.cookie = `Authorization=${currentUser.Email}; expires=Sun, 1 Jan 2024 00:00:00 UTC; path=/`
+
+            $("#currentUser").text(currentUser.Email)
+        }
+    </script>
 </body>
 
 </html>
