@@ -59,7 +59,7 @@ func TestSendMessage(t *testing.T) {
 	// app := fiber.New(fiber.Config{})
 	// app.Add(fiber.MethodPost, "/api/chat/:chatID", SendMessage)
 
-	user, err := addRandomUser(DB)
+	user, err := addRandomUser(DB, false)
 	utils.AssertEqual(t, nil, err)
 
 	chat, err := addRandomChat(DB)

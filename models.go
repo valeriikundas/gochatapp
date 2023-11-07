@@ -9,6 +9,7 @@ type User struct {
 	Email string `gorm:"uniqueIndex" validate:"required"`
 
 	// TODO: add `images` prefix e.g. `images/{filename}.jpg` to this url
+	// TODO: use random name for file names
 	AvatarURL string `gorm:"uniqueIndex;default:null"`
 
 	Chats []Chat `gorm:"many2many:chat_members"`

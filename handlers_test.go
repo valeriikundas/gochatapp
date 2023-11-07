@@ -70,7 +70,7 @@ func TestUploadUserAvatar(t *testing.T) {
 	defer clearDB(DB)
 	app := createApp(DB)
 
-	user, err := addRandomUser(DB)
+	user, err := addRandomUser(DB, false)
 	utils.AssertEqual(t, nil, err)
 
 	fileName := "test.jpeg"
@@ -165,6 +165,7 @@ func TestGetChatViewWithoutWholeApp(t *testing.T) {
 	users, err := addRandomUsers(DB, 10)
 	utils.AssertEqual(t, nil, err)
 
+	// TODO: test
 	log.Printf("%v\n", len(users))
 
 	chat, err := addRandomChat(DB)
@@ -177,5 +178,6 @@ func TestGetChatViewWithoutWholeApp(t *testing.T) {
 	bytes, err := io.ReadAll(resp.Body)
 	utils.AssertEqual(t, nil, err)
 
+	// TODO: test
 	log.Printf("%v\n", string(bytes))
 }

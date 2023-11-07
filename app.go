@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"log"
+	"os"
 
 	"github.com/go-playground/validator/v10"
 	fiberlog "github.com/gofiber/fiber/v2/log"
@@ -16,6 +17,11 @@ var logger fiberlog.AllLogger
 func main() {
 	shouldGenerateChats := flag.Bool("generateChats", false, "Should generate chats?")
 	flag.Parse()
+
+	_, err := os.Stat("uploads/")
+	if os.IsNotExist(err) {
+		os.MkdirAll("./uploads", 0744)
+	}
 
 	DB = connectDatabase("chatapp")
 
@@ -74,3 +80,4 @@ func main() {
 // TODO: structure logging https://pkg.go.dev/golang.org/x/exp/slog
 // TODO: setup sentry or some other monitoring
 // TODO: try rpc, grpc, webrtc
+// TODO: setup linter for function length and code complexity

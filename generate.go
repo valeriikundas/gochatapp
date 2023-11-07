@@ -2,8 +2,12 @@ package main
 
 import (
 	"errors"
+	"fmt"
+	"io"
 	"math"
 	"math/rand"
+	"net/http"
+	"os"
 	"strings"
 	"testing"
 
@@ -12,16 +16,56 @@ import (
 	"gorm.io/gorm"
 )
 
-func addRandomUser(db *gorm.DB) (*User, error) {
+func addRandomUser(db *gorm.DB, addAvatar bool) (*User, error) {
+	username := gofakeit.Name()
+
+	var avatarURL string
+	if addAvatar {
+		cleanedUsername := strings.ReplaceAll(username, " ", "")
+		fileName := fmt.Sprintf("%s.jpg", cleanedUsername)
+		URL := "https://random.imagecdn.app/300/200"
+		err := loadImageFromURL(URL, fileName)
+		if err != nil {
+			return nil, err
+		}
+
+		avatarURL = fmt.Sprintf("/%s", fileName)
+	} else {
+		avatarURL = ""
+	}
+
 	user := User{
-		Name:  gofakeit.Name(),
-		Email: gofakeit.Email(),
+		Name:      username,
+		Email:     gofakeit.Email(),
+		AvatarURL: avatarURL,
 	}
 	tx := db.Create(&user)
 	if tx.Error != nil {
 		return nil, tx.Error
 	}
 	return &user, nil
+}
+
+func loadImageFromURL(URL, fileName string) error {
+	resp, err := http.Get(URL)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	filePath := fmt.Sprintf("uploads/%s", fileName)
+	file, err := os.Create(filePath)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	_, err = io.Copy(file, resp.Body)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func addRandomUsers(db *gorm.DB, n int) ([]User, error) {
@@ -64,29 +108,10 @@ func addRandomChat(db *gorm.DB) (*Chat, error) {
 }
 
 func generateRandomChats(t *testing.T, db *gorm.DB) error {
-	userData := make([]User, 100)
-	for i := 0; i < 100; i += 1 {
-		user, err := addRandomUser(db)
-		if t == nil {
-			if err != nil {
-				return err
-			}
-		} else {
-			utils.AssertEqual(t, nil, err)
-		}
-		userData[i] = *user
-	}
+	// TODO: refactor to focused functions
 
-	var users []User
-	tx := db.Find(&users)
-	if t == nil {
-		if tx.Error != nil {
-			return tx.Error
-		}
-	} else {
-		utils.AssertEqual(t, int64(100), tx.RowsAffected)
-		utils.AssertEqual(t, nil, tx.Error)
-	}
+	users, err := addRandomUsers(DB, 100)
+	utils.AssertEqual(t, nil, err)
 
 	k := 100
 	chatData := make([]Chat, k)
@@ -103,12 +128,11 @@ func generateRandomChats(t *testing.T, db *gorm.DB) error {
 	}
 
 	for _, chat := range chatData {
-		messagesCount := rand.Intn(5) + 1
-		// log.Printf("count=%v\n", messagesCount)
+		messagesCount := rand.Intn(50) + 1
 		messages := make([]Message, messagesCount)
 		for i := 0; i < messagesCount; i += 1 {
-			userIndex := rand.Intn(len(userData))
-			fromID := userData[userIndex].ID
+			userIndex := rand.Intn(len(users))
+			fromID := users[userIndex].ID
 			messageLength := rand.Intn(20)
 			messages[i] = Message{
 				ChatID:  chat.ID,
@@ -116,9 +140,7 @@ func generateRandomChats(t *testing.T, db *gorm.DB) error {
 				Content: gofakeit.LoremIpsumSentence(messageLength),
 			}
 		}
-		msg := messages[0]
-		// log.Printf("msg=%v\n", msg)
-		tx := db.Create(&msg)
+		tx := db.Create(&messages)
 		if t == nil {
 			if tx.Error != nil {
 				return tx.Error

@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"os"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
@@ -279,11 +278,6 @@ func UploadUserAvatar(c *fiber.Ctx) error {
 	file, err := c.FormFile("image")
 	if err != nil {
 		return err
-	}
-
-	_, err = os.Stat("uploads/")
-	if os.IsNotExist(err) {
-		os.MkdirAll("./uploads", 0744)
 	}
 
 	fileName := file.Filename
