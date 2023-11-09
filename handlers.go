@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"log"
 
@@ -208,14 +207,10 @@ func GetUsers(c *fiber.Ctx) error {
 		return err
 	}
 
-	bytes, err := json.MarshalIndent(fiber.Map{
-		"Users": users,
-	}, "", "  ")
-	if err != nil {
-		return err
-	}
 	// TODO: return only requested fields, no created_at,deleted_at,messages etc for all route handlers
-	return c.SendString(string(bytes))
+	return c.JSON(fiber.Map{
+		"Users": users,
+	})
 }
 
 type UserResponse struct {
@@ -295,15 +290,9 @@ func GetChats(c *fiber.Ctx) error {
 		return tx.Error
 	}
 
-	data := GetChatsResponse{
+	return c.JSON(GetChatsResponse{
 		Chats: chats,
-	}
-	bytes, err := json.MarshalIndent(data, "", "  ")
-	if err != nil {
-		return err
-	}
-
-	return c.SendString(string(bytes))
+	})
 }
 
 func GetChat(c *fiber.Ctx) error {
@@ -321,14 +310,9 @@ func GetChat(c *fiber.Ctx) error {
 		return err
 	}
 
-	bytes, err := json.MarshalIndent(fiber.Map{
+	return c.JSON(fiber.Map{
 		"Chat": chat,
-	}, "", "  ")
-	if err != nil {
-		return err
-	}
-
-	return c.SendString(string(bytes))
+	})
 }
 
 type SendMessageRequest struct {
