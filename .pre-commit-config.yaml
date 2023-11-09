@@ -20,7 +20,21 @@ repos:
     -   id: go-lint
         name: lint go
         language: system
-        entry: golangci-lint run
+        entry: golangci-lint run -e gocritic 
+        types: [go]
+        files: '.go'
+        pass_filenames: false
+    -   id: staticcheck
+        name: staticcheck
+        language: system
+        entry: staticcheck ./...
+        types: [go]
+        files: '.go'
+        pass_filenames: false
+    -   id: gocyclo
+        name: gocyclo
+        language: system
+        entry: gocyclo -over 10 .
         types: [go]
         files: '.go'
         pass_filenames: false
