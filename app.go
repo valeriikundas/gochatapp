@@ -6,13 +6,11 @@ import (
 	"os"
 
 	"github.com/go-playground/validator/v10"
-	fiberlog "github.com/gofiber/fiber/v2/log"
 	"gorm.io/gorm"
 )
 
 var DB *gorm.DB
 var validate *validator.Validate
-var logger fiberlog.AllLogger
 
 func main() {
 	shouldGenerateChats := flag.Bool("generateChats", false, "Should generate chats?")
@@ -84,3 +82,5 @@ func main() {
 // TODO: setup load testing https://github.com/tsenart/vegeta
 // TODO: add api versioning
 // TODO: try out many of fiber middlewares
+// TODO: use fiber auth middleware https://docs.gofiber.io/api/middleware/basicauth
+// TODO: setup vscode's dev containers

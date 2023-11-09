@@ -8,6 +8,7 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/log"
+	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/gofiber/template/html/v2"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -33,11 +34,14 @@ func connectDatabase(dbName string) *gorm.DB {
 }
 
 func createApp(db *gorm.DB) *fiber.App {
-	logger = setupLogger()
+	setupLogger()
 
 	validate = validator.New()
 
 	htmlEngine := html.New("templates/", ".html")
+
+	// TODO: will use django engine for new templates likely
+	// djangoEngine := django.New("templates/django/", ".html")
 
 	app := fiber.New(fiber.Config{
 		AppName:     "GoChatApp",
@@ -52,6 +56,8 @@ func createApp(db *gorm.DB) *fiber.App {
 			})
 		},
 	})
+
+	app.Use(logger.New())
 
 	app.Static("/", "uploads/", fiber.Static{})
 

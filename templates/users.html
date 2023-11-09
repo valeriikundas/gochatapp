@@ -1,23 +1,32 @@
-<div style="display:flex; flex-wrap:wrap; justify-content: space-between; flex-flow: row wrap; border: 1px solid blue;">
-    {{range .Users}}
-    <div style="border: solid 1px purple; margin: 10px">
-        <div style="text-align: center; margin: 10px;">
-            {{if .AvatarURL}}
-            <img src="{{.AvatarURL}}"
-                 alt="user profile photo" />
-            {{else}}
-            <img src="https://picsum.photos/120/160"
-                 alt="default image" />
+<div class="overflow-x-auto">
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Avatar</th>
+                <th>Name</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{range .}}
+            <tr>
+                <td>
+                    <div class="avatar">
+                        <div class="mask mask-squircle w-12 h-12">
+                            <img src="{{.AvatarURL}}"
+                                 alt="Avatar URL" />
+                        </div>
+                    </div>
+                </td>
+                <td>
+                    <div class="flex items-center space-x-3">
+                        <div>
+                            <div class="font-bold">{{.Name}}</div>
+                            <div class="text-sm opacity-50">{{.Email}}</div>
+                        </div>
+                    </div>
+                </td>
+            </tr>
             {{end}}
-
-        </div>
-        <div style="text-align: center;">
-            {{.Name}}
-        </div>
-        <div style="font-size: 12px; text-align: center;">
-            {{.Email}}
-        </div>
-        <button onclick="location.href='/ui/users/{{.ID}}'">See detailed user info</button>
-    </div>
-    {{end}}
+        </tbody>
+    </table>
 </div>

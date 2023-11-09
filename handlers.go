@@ -311,6 +311,31 @@ func GetChats(c *fiber.Ctx) error {
 	return c.SendString(string(bytes))
 }
 
+func GetChat(c *fiber.Ctx) error {
+	var params struct {
+		ChatID uint
+	}
+	err := c.ParamsParser(&params)
+	if err != nil {
+		return err
+	}
+
+	var chat Chat
+	err = DB.Preload("Members").First(&chat, params.ChatID).Error
+	if err != nil {
+		return err
+	}
+
+	bytes, err := json.MarshalIndent(fiber.Map{
+		"Chat": chat,
+	}, "", "  ")
+	if err != nil {
+		return err
+	}
+
+	return c.SendString(string(bytes))
+}
+
 type SendMessageRequest struct {
 	UserEmail string
 	Content   string
@@ -366,9 +391,7 @@ func SendMessage(c *fiber.Ctx) error {
 		Content: data.Content,
 	}
 	tx = DB.Create(&message)
-
 	if tx.Error != nil {
-		logger.Errorf("er=%v\n", tx.Statement.Error)
 		return errors.Wrap(tx.Error, "db create message failed")
 	}
 
