@@ -48,4 +48,4 @@
 // TODO: try out many of fiber middlewares
 // TODO: use fiber auth middleware https://docs.gofiber.io/api/middleware/basicauth
 // TODO: setup vscode's dev containers
- 
+TODO: improve knowledge of Makefile, bash scripting 
