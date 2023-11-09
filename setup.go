@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"io"
 	"os"
@@ -58,7 +59,10 @@ func createApp(db *gorm.DB) *fiber.App {
 	})
 
 	app.Use(IndentJSONResponseMiddleware)
-	app.Use(logger.New())
+
+	if !isTesting() {
+		app.Use(logger.New())
+	}
 
 	app.Static("/", "uploads/", fiber.Static{})
 
@@ -77,4 +81,8 @@ func setupLogger() log.AllLogger {
 	logWriter := io.MultiWriter(os.Stdout, logFile)
 	logger.SetOutput(logWriter)
 	return logger
+}
+
+func isTesting() bool {
+	return flag.Lookup("test.v") != nil
 }

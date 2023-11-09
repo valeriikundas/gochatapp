@@ -119,7 +119,7 @@ func TestChatsView(t *testing.T) {
 	utils.AssertEqual(t, nil, err)
 	utils.AssertEqual(t, 10, len(users))
 
-	chat, err := addRandomChatWithUsers(DB)
+	_, err = addRandomChatWithUsers(DB)
 	utils.AssertEqual(t, nil, err)
 
 	user := users[0]
@@ -134,7 +134,7 @@ func TestChatsView(t *testing.T) {
 	utils.AssertEqual(t, fiber.StatusOK, resp.StatusCode)
 
 	// TODO: search chat name and users in html
-	log.Printf("chat=%v\n", chat)
+	// log.Printf("chat=%v\n", chat)
 }
 
 func TestGetChatView(t *testing.T) {
@@ -184,11 +184,11 @@ func TestGetChatViewWithoutWholeApp(t *testing.T) {
 	utils.AssertEqual(t, nil, err)
 	utils.AssertEqual(t, fiber.StatusOK, resp.StatusCode, "Status code")
 
-	bytes, err := io.ReadAll(resp.Body)
+	_, err = io.ReadAll(resp.Body)
 	utils.AssertEqual(t, nil, err)
 
 	// TODO: test
-	log.Printf("%v\n", string(bytes))
+	// log.Printf("%v\n", string(bytes))
 }
 
 func TestJoinChat(t *testing.T) {

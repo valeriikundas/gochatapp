@@ -12,7 +12,7 @@ func setupRoutes(app *fiber.App) {
 
 	ui.Get("/login", LoginView)
 	ui.Post("/login", PostLoginView)
-	ui.Get("/chats/all", AllChatsView)
+	ui.Get("/chats", AllChatsView)
 	ui.Get("/chats/:chatID", ChatView)
 	ui.Get("/users/:userID/chats", UserChatsView)
 	ui.Get("/users", UsersView)

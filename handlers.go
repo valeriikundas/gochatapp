@@ -422,8 +422,6 @@ func PostLoginView(c *fiber.Ctx) error {
 }
 
 func UploadUserAvatar(c *fiber.Ctx) error {
-	log.Println("UploadUserAvatar")
-
 	file, err := c.FormFile("image")
 	if err != nil {
 		return err
