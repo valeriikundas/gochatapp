@@ -57,6 +57,7 @@ func createApp(db *gorm.DB) *fiber.App {
 		},
 	})
 
+	app.Use(IndentJSONResponseMiddleware)
 	app.Use(logger.New())
 
 	app.Static("/", "uploads/", fiber.Static{})

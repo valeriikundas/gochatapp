@@ -242,14 +242,9 @@ func GetUser(c *fiber.Ctx) error {
 		return tx.Error
 	}
 
-	response := map[string]any{
+	return c.JSON(fiber.Map{
 		"User": user,
-	}
-	bytes, err := json.MarshalIndent(response, "", "  ")
-	if err != nil {
-		return err
-	}
-	return c.SendString(string(bytes))
+	})
 }
 
 type FieldError struct {
