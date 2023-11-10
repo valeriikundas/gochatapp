@@ -1,3 +1,7 @@
+![Visualization of the codebase](./diagram.svg)
+
+## TODO:
+
 - [ ] implement chat functionality using websockets
 
 - [ ] use fiber auth middleware https://docs.gofiber.io/api/middleware/basicauth
