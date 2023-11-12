@@ -10,8 +10,10 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"strings"
 	"testing"
 
+	"github.com/fasthttp/websocket"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/utils"
 	"github.com/gofiber/template/html/v2"
@@ -235,4 +237,162 @@ func TestJoinChat(t *testing.T) {
 		}
 	}
 	utils.AssertEqual(t, true, isChatFound)
+}
+
+func TestSendMessageToWebsocket(t *testing.T) {
+	var clearDB func(*gorm.DB) error
+	DB, clearDB = prepareTestDb(t)
+	defer clearDB(DB)
+	app := createApp(DB)
+
+	users, err := addRandomUsers(DB, 10)
+	utils.AssertEqual(t, nil, err)
+
+	chat, err := addRandomChatWithNoUsers(DB)
+	utils.AssertEqual(t, nil, err)
+
+	chatId := chat.ID
+
+	// join chat
+	user := users[0].Email
+	data := struct {
+		Email string
+	}{
+		Email: user,
+	}
+	jsonData, err := json.Marshal(data)
+	utils.AssertEqual(t, nil, err)
+	body := bytes.NewReader(jsonData)
+	req := httptest.NewRequest(fiber.MethodPost, fmt.Sprintf("/api/chats/%d/users", chatId), body)
+	req.Header.Set("Content-Type", "application/json")
+	resp, err := app.Test(req)
+	utils.AssertEqual(t, nil, err)
+	utils.AssertEqual(t, fiber.StatusOK, resp.StatusCode)
+
+	// send message to chat
+	testServer := httptest.NewServer(http.HandlerFunc(websocketHandler))
+	defer testServer.Close()
+
+	url := "ws" + strings.TrimPrefix(testServer.URL, "http") + "/ws"
+	conn, resp, err := websocket.DefaultDialer.Dial(url, nil)
+	utils.AssertEqual(t, nil, err)
+	defer conn.Close()
+	utils.AssertEqual(t, fiber.StatusSwitchingProtocols, resp.StatusCode)
+	b, err := io.ReadAll(resp.Body)
+	utils.AssertEqual(t, nil, err)
+	log.Printf("log response body1=%s\n", string(b))
+
+	log.Printf("conn.LocalAddr()=%s", conn.LocalAddr())
+
+	url = "ws" + strings.TrimPrefix(testServer.URL, "http") + "/ws/5"
+	log.Printf("log url=%s\n", url)
+	conn, resp, err = websocket.DefaultDialer.Dial(url, nil)
+	utils.AssertEqual(t, nil, err)
+	defer conn.Close()
+	utils.AssertEqual(t, fiber.StatusSwitchingProtocols, resp.StatusCode, "Status code")
+
+	b, err = io.ReadAll(resp.Body)
+	utils.AssertEqual(t, nil, err)
+	log.Printf("log response body2=%s\n", string(b))
+
+	// v := map[string]any{
+	// 	"a": "b",
+	// 	"x": 123,
+	// }
+	// jsonData, err = json.Marshal(v)
+	utils.AssertEqual(t, nil, err)
+	err = conn.WriteMessage(websocket.TextMessage, []byte("hello"))
+	utils.AssertEqual(t, nil, err, "websocket WriteMessage failed")
+}
+
+var upgrader = websocket.Upgrader{}
+
+func websocketHandler(w http.ResponseWriter, r *http.Request) {
+	c, err := upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		log.Fatalf("websocket upgrade failed %s\n", err)
+	}
+	defer c.Close()
+
+	for {
+		messageType, p, err := c.ReadMessage()
+		if err != nil {
+			// closeError, ok := err.(*websocket.CloseError)
+			// log.Printf("ok=%t code=%d text=%s error=%s\n", ok, closeError.Code, closeError.Text, closeError.Error())
+
+			// if websocket.IsCloseError(err, websocket.CloseAbnormalClosure) {
+			// 	log.Fatalf("IsCloseError err=%s\n", err)
+			// }
+
+			log.Fatalf("websocket read message failed %s\n", err)
+			break
+		}
+
+		// message := string(p)
+		// log.Printf("websocket received message type=%d messages=%s\n", messageType, message)
+
+		// data := map[string]any{
+		// 	"hello": "websocket",
+		// 	"a":     123,
+		// }
+		// _, err = json.Marshal(data)
+		// if err != nil {
+		// 	log.Fatalf("websocket json marshall failed err=%s\n", err)
+		// }
+		// log.Printf("will conn.WriteMessage type=%d data=%+v\n", messageType, data)
+
+		err = c.WriteMessage(messageType, p)
+		if err != nil {
+			log.Fatalf("websocket write message failed %s\n", err)
+			break
+		}
+	}
+}
+
+func echo(w http.ResponseWriter, r *http.Request) {
+	c, err := upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		return
+	}
+	defer c.Close()
+	for {
+		mt, message, err := c.ReadMessage()
+		if err != nil {
+			break
+		}
+		err = c.WriteMessage(mt, message)
+		if err != nil {
+			break
+		}
+	}
+}
+
+func TestExample(t *testing.T) {
+	// Create test server with the echo handler.
+	s := httptest.NewServer(http.HandlerFunc(echo))
+	defer s.Close()
+
+	// Convert http://127.0.0.1 to ws://127.0.0.
+	u := "ws" + strings.TrimPrefix(s.URL, "http")
+
+	// Connect to the server
+	ws, _, err := websocket.DefaultDialer.Dial(u, nil)
+	if err != nil {
+		t.Fatalf("%v", err)
+	}
+	defer ws.Close()
+
+	// Send message to server, read response and check to see if it's what we expect.
+	for i := 0; i < 10; i++ {
+		if err := ws.WriteMessage(websocket.TextMessage, []byte("hello")); err != nil {
+			t.Fatalf("%v", err)
+		}
+		_, p, err := ws.ReadMessage()
+		if err != nil {
+			t.Fatalf("%v", err)
+		}
+		if string(p) != "hello" {
+			t.Fatalf("bad message")
+		}
+	}
 }
