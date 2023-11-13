@@ -20,7 +20,7 @@ repos:
     -   id: go-lint
         name: lint go
         language: system
-        entry: golangci-lint run -e gocritic 
+        entry: golangci-lint run -e gocritic
         types: [go]
         files: '.go'
         pass_filenames: false

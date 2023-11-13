@@ -4,9 +4,9 @@ run:
 test:
 	go test
 
-cover: 
+cover:
 	go test -coverprofile=coverage.out
-	
+
 report:
 	go tool cover -html=coverage.out
 
