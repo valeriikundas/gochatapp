@@ -41,6 +41,7 @@ func AllChatsView(c *fiber.Ctx) error {
 
 	return c.Render("chats", fiber.Map{
 		"Chats":       chats,
+		"Mode":        "all",
 		"CurrentUser": user,
 	})
 }
@@ -54,7 +55,7 @@ func UserChatsView(c *fiber.Ctx) error {
 	userEmail := sessionCurrentUser.Email
 
 	var user User
-	err = DB.Preload("Chats").Where("Email = ?", userEmail).First(&user).Error
+	err = DB.Preload("Chats.Members").Where("Email = ?", userEmail).First(&user).Error
 	if err != nil {
 		return errors.Wrap(err, "Get user by email")
 	}
@@ -63,6 +64,7 @@ func UserChatsView(c *fiber.Ctx) error {
 
 	return c.Render("chats", fiber.Map{
 		"Chats":       userChats,
+		"Mode":        "joined",
 		"CurrentUser": *sessionCurrentUser,
 	})
 }

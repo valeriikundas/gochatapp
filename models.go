@@ -13,7 +13,7 @@ type User struct {
 
 	// TODO: add `images` prefix e.g. `images/{filename}.jpg` to this url
 	// TODO: use random name for file names
-	AvatarURL string `gorm:"uniqueIndex;default:null"`
+	AvatarURL string
 
 	Chats []Chat `gorm:"many2many:chat_members"`
 

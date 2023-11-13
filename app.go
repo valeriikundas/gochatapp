@@ -7,12 +7,20 @@ import (
 
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2/middleware/session"
+	"github.com/gofiber/storage/redis/v3"
 	"gorm.io/gorm"
 )
 
 var DB *gorm.DB
 var validate *validator.Validate
-var store = session.New()
+var redisStorage = redis.New(redis.Config{
+	Host:     "0.0.0.0",
+	Port:     6379,
+	Username: "valeriikundas",
+})
+var store = session.New(session.Config{
+	Storage: redisStorage,
+})
 
 func main() {
 	shouldGenerateChats := flag.Bool("generateChats", false, "Should generate chats?")

@@ -4,3 +4,5 @@ tmp/
 *.out
 *.log
 uploads/
+data/
+templates/node_modules/

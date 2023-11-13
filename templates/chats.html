@@ -1,51 +1,51 @@
+{{$Mode := .Mode}}
+
 <div class="overflow-x-auto">
-    <h2>Chats list</h2>
-    <table class="table">
-        <thead>
-            <tr>
-                <th>Chat name</th>
-                <th>Members</th>
-                <th></th>
-            </tr>
-        </thead>
-        <tbody>
-            {{range .Chats}}
-            <tr>
-                <td>
-                    {{.Name}}
-                </td>
-                <td>
-                    <ul>
-                        {{range .Members}}
-                        {{if .Name}}
-                        <li>{{.Name}}</li>
-                        {{else}}
-                        <li>{{.Email}}</li>
-                        {{end}}
-                        {{end}}
-                    </ul>
-                </td>
-                <td class="flex">
-                    <!-- TODO: hide `joinChat` button if I belong to this chat -->
-                    <button onclick="joinChat({{.ID}})"
-                            class="btn">Join</button>
-                    <button onclick="viewChat({{.ID}})"
-                            class="btn">View</button>
-                </td>
-            </tr>
+  <h2>Chats list</h2>
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Chat name</th>
+        <th>Members</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {{ range .Chats }}
+        <tr>
+          <td>
+            {{ .Name }}
+          </td>
+          <td>
+            <ul>
+              {{ range .Members }}
+                {{ if .Name }}
+                  <li>{{ .Name }}</li>
+                {{ else }}
+                  <li>{{ .Email }}</li>
+                {{ end }}
+              {{ end }}
+            </ul>
+          </td>
+          <td class="flex">
+            {{if eq $Mode "all"}}
+            <button onclick="joinChat({{ .ID }})" class="btn">Join</button>
             {{end}}
-        </tbody>
-    </table>
+
+            <button onclick="viewChat({{ .ID }})" class="btn">View</button>
+          </td>
+        </tr>
+      {{ end }}
+    </tbody>
+  </table>
 </div>
 
 <script>
-    function joinChat(chatID) {
+    function joinChat(chatID){
         // TODO: debug
         // FIXME: get user from .CurrentUser
-        const currentUserJSON = "{{.CurrentUser}}"
-        alert(currentUserJSON)
-        const currentUser = JSON.parse(currentUserJSON)
-        alert(currentUser)
+        const currentUser = {{.CurrentUser}}
+        console.log(currentUser)
         const userEmail = currentUser.Email
 
         console.log("userEmail chatId ", userEmail, chatID)
