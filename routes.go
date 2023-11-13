@@ -1,6 +1,9 @@
 package main
 
-import "github.com/gofiber/fiber/v2"
+import (
+	"github.com/gofiber/contrib/websocket"
+	"github.com/gofiber/fiber/v2"
+)
 
 func setupRoutes(app *fiber.App) {
 	app.Get("/", RootHandler)
@@ -19,6 +22,7 @@ func setupRoutes(app *fiber.App) {
 	ui.Get("/users/:userID", UserView)
 	ui.Get("", HomeView)
 
+	api.Post("/login", Login)
 	api.Get("/users", GetUsers)
 	api.Get("/users/:userID", GetUser)
 	api.Post("/users", CreateUser)

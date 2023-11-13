@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 
@@ -13,45 +14,44 @@ import (
 // TODO: split ui and api handlers
 
 func AllChatsView(c *fiber.Ctx) error {
+	sessionCurrentUser, err := getLoggedInUser(c)
+	_, isUnauthorizedUserError := err.(*UnauthorizedUserError)
+	if err != nil {
+		if !isUnauthorizedUserError {
+			return errors.Wrap(err, "getLoggedInUser")
+		}
+	}
+
 	var chats []Chat
 	tx := DB.Model(&Chat{}).Preload("Members").Find(&chats)
 	if tx.Error != nil {
 		return tx.Error
 	}
 
-	var cookie struct {
-		Authorization string
-	}
-	err := c.CookieParser(&cookie)
-	if err != nil {
-		return errors.Wrap(err, "CookieParser")
-	}
+	var user *User
+	if sessionCurrentUser != nil {
+		userEmail := sessionCurrentUser.Email
 
-	var user User
-	tx = DB.Where("Email = ?", cookie.Authorization).First(&user)
-	if tx.Error != nil {
-		return errors.Wrap(tx.Error, "User not found")
+		tx = DB.Where("Email = ?", userEmail).First(&user)
+		if tx.Error != nil {
+			return errors.Wrap(tx.Error, "User not found")
+		}
 	}
 
 	return c.Render("chats", fiber.Map{
-		"Chats": chats,
-		// TODO: is `User` needed in ui?
-		"User": user,
+		"Chats":       chats,
+		"CurrentUser": user,
 	})
 }
 
 func UserChatsView(c *fiber.Ctx) error {
 	// TODO: use `session` middleware instead of raw cookies
-
-	var cookie struct {
-		Authorization string
-	}
-	err := c.CookieParser(&cookie)
+	sessionCurrentUser, err := getLoggedInUser(c)
 	if err != nil {
-		return errors.Wrap(err, "CookieParser")
+		return err
 	}
 
-	userEmail := cookie.Authorization
+	userEmail := sessionCurrentUser.Email
 
 	var user User
 	err = DB.Preload("Chats").Where("Email = ?", userEmail).First(&user).Error
@@ -103,9 +103,14 @@ func ChatView(c *fiber.Ctx) error {
 	// TODO: leave chat feature
 	// TODO: bots that talk live
 
+	sessionCurrentUser, err := getLoggedInUser(c)
+	if err != nil {
+		return errors.Wrap(err, "getLoggedInUser`")
+	}
+
 	chatID, err := c.ParamsInt("chatId", -1)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "ParamsInt")
 	}
 	if chatID == -1 {
 		return errors.New("chatId param missing in URL")
@@ -113,23 +118,13 @@ func ChatView(c *fiber.Ctx) error {
 	var chat Chat
 	tx := DB.Preload("Members").Where("id = ?", chatID).Preload("Messages.From").First(&chat)
 	if tx.Error != nil {
-		return tx.Error
+		return errors.Wrap(tx.Error, "get chat by id")
 	}
-
-	var cookie struct {
-		Authorization string
-	}
-	err = c.CookieParser(&cookie)
-	if err != nil {
-		return err
-	}
-
-	log.Printf("out=%+v auth=%v\n", cookie, cookie.Authorization)
 
 	var user *User
-	if cookie.Authorization != "" {
+	if sessionCurrentUser != nil {
 		// todo: implement current user functionality
-		tx = DB.Where("Email = ?", cookie.Authorization).First(&user)
+		tx = DB.Where("Email = ?", sessionCurrentUser.Email).First(&user)
 		if errors.Is(tx.Error, gorm.ErrRecordNotFound) {
 			return errors.Wrap(tx.Error, "User not found")
 		} else if tx.Error != nil {
@@ -141,8 +136,8 @@ func ChatView(c *fiber.Ctx) error {
 	// does not throw an error, but it should. needs deeper look into fiber
 	// source code
 	return c.Render("chat", fiber.Map{
-		"Chat": chat,
-		"User": user,
+		"Chat":        chat,
+		"CurrentUser": user,
 	})
 
 	// NOTE: below is a code that makes failing template realy fail
@@ -169,17 +164,19 @@ func ChatView(c *fiber.Ctx) error {
 }
 
 func HomeView(c *fiber.Ctx) error {
-	var cookie struct {
-		Authorization string
-	}
-	err := c.CookieParser(&cookie)
+	sessionCurrentUser, err := getLoggedInUser(c)
 	if err != nil {
-		return errors.Wrap(err, "CookieParser")
+		_, isUnauthorizedUserError := err.(*UnauthorizedUserError)
+		if isUnauthorizedUserError {
+			//
+		} else {
+			return errors.Wrap(err, "getLoggedInUser()")
+		}
 	}
 
 	var currentUser *User
-	if cookie.Authorization != "" {
-		userEmail := cookie.Authorization
+	if sessionCurrentUser != nil {
+		userEmail := sessionCurrentUser.Email
 		err = DB.Where("Email = ?", userEmail).First(&currentUser).Error
 		if err != nil {
 			return errors.Wrap(err, "Get user by email")
@@ -199,6 +196,53 @@ func getUsers() ([]User, error) {
 	}
 
 	return users, nil
+}
+
+type LoginRequestSchema struct {
+	Email    string
+	Password string
+}
+
+func Login(c *fiber.Ctx) error {
+	// TODO: implement passwords
+	var loginData LoginRequestSchema
+	err := c.BodyParser(&loginData)
+	if err != nil {
+		return errors.Wrap(err, "BodyParser")
+	}
+
+	session, err := store.Get(c)
+	if err != nil {
+		return err
+	}
+
+	var user User
+	err = DB.Where("Email = ?", loginData.Email).Find(&user).Error
+	if err != nil {
+		return errors.Wrap(err, "Get user by email")
+	}
+
+	currentUser := SessionCurrentUser{
+		ID:        user.ID,
+		Name:      user.Name,
+		Email:     user.Email,
+		AvatarURL: user.AvatarURL,
+	}
+	b, err := json.Marshal(currentUser)
+	if err != nil {
+		return errors.Wrap(err, "json marshall currentUser")
+	}
+
+	session.Set(SessionCurrentUserKey, string(b))
+	err = session.Save()
+	if err != nil {
+		return errors.Wrap(err, "session save()")
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"status": "user was logged in",
+	})
+
 }
 
 func GetUsers(c *fiber.Ctx) error {
@@ -321,20 +365,22 @@ type SendMessageRequest struct {
 }
 
 func SendMessage(c *fiber.Ctx) error {
+	sessionCurrentUser, err := getLoggedInUser(c)
+	if err != nil {
+		_, isUnauthorizedUserError := err.(*UnauthorizedUserError)
+		if isUnauthorizedUserError {
+			return errors.Wrap(err, "isUnauthorizedUserError")
+		} else {
+			return errors.Wrap(err, "getLoggedInUser()")
+		}
+	}
+
 	var params struct {
 		ChatID int
 	}
-	err := c.ParamsParser(&params)
+	err = c.ParamsParser(&params)
 	if err != nil {
-		return err
-	}
-
-	var cookie struct {
-		Authorization string
-	}
-	err = c.CookieParser(&cookie)
-	if err != nil {
-		return err
+		return errors.Wrap(err, "ParamsParser")
 	}
 
 	var data SendMessageRequest
@@ -357,7 +403,7 @@ func SendMessage(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(errors)
 	}
 
-	userEmail := cookie.Authorization
+	userEmail := sessionCurrentUser.Email
 	var user User
 	tx := DB.Where("Email = ?", userEmail).First(&user)
 	if tx.Error != nil {
@@ -397,6 +443,11 @@ func PostLoginView(c *fiber.Ctx) error {
 		return err
 	}
 
+	session, err := store.Get(c)
+	if err != nil {
+		return err
+	}
+
 	var user *User
 	tx := DB.Where("Email = ?", data.Email).First(&user)
 	if errors.Is(tx.Error, gorm.ErrRecordNotFound) {
@@ -409,11 +460,46 @@ func PostLoginView(c *fiber.Ctx) error {
 		if tx.Error != nil {
 			return tx.Error
 		}
+
+		sessionCurrentUser := SessionCurrentUser{
+			ID:        createdUser.ID,
+			Name:      createdUser.Name,
+			Email:     createdUser.Email,
+			AvatarURL: createdUser.AvatarURL,
+		}
+		b, err := json.Marshal(sessionCurrentUser)
+		if err != nil {
+			return err
+		}
+		sessionCurrentUserJSON := string(b)
+		session.Set(SessionCurrentUserKey, sessionCurrentUserJSON)
+		err = session.Save()
+		if err != nil {
+			return err
+		}
+
 		return c.Render("home", fiber.Map{
 			"CurrentUser": createdUser,
 		})
 	} else if tx.Error != nil {
 		return tx.Error
+	}
+
+	sessionCurrentUser := SessionCurrentUser{
+		ID:        user.ID,
+		Name:      user.Name,
+		Email:     user.Email,
+		AvatarURL: user.AvatarURL,
+	}
+	b, err := json.Marshal(sessionCurrentUser)
+	if err != nil {
+		return err
+	}
+	sessionCurrentUserJSON := string(b)
+	session.Set(SessionCurrentUserKey, sessionCurrentUserJSON)
+	err = session.Save()
+	if err != nil {
+		return err
 	}
 
 	return c.Render("home", fiber.Map{

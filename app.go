@@ -6,11 +6,13 @@ import (
 	"os"
 
 	"github.com/go-playground/validator/v10"
+	"github.com/gofiber/fiber/v2/middleware/session"
 	"gorm.io/gorm"
 )
 
 var DB *gorm.DB
 var validate *validator.Validate
+var store = session.New()
 
 func main() {
 	shouldGenerateChats := flag.Bool("generateChats", false, "Should generate chats?")

@@ -34,8 +34,11 @@ func addRandomUser(db *gorm.DB, addAvatar bool) (*User, error) {
 		avatarURL = ""
 	}
 
+	password := gofakeit.Password(true, true, true, true, true, 20)
+
 	user := User{
 		Name:      username,
+		Password:  password,
 		Email:     gofakeit.Email(),
 		AvatarURL: avatarURL,
 	}

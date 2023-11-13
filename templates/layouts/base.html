@@ -26,6 +26,14 @@
 
 <body>
     <div class="navbar bg-base-100">
+        {{if .CurrentUser}}
+        <p>
+            Current user: <span>{{.CurrentUser.Email}}</span>
+        </p>
+        {{else}}
+        <p>Unauthorized</p>
+        {{end}}
+
         {{if not .CurrentUser}}
         <a class="btn btn-ghost normal-case text-xl"
            onclick="location.href='/ui/login'">Login</a>
@@ -52,22 +60,12 @@
     </div>
 
     <script>
-        let currentUser = {{.CurrentUser }}
-        if (!currentUser) {
-            let item = localStorage.getItem("currentUser")
-            if (item) {
-                currentUser = JSON.parse(item)
-                console.log("parsed currentUser=", currentUser)
-            } else {
-                console.log("not logged in")
-            }
-        }
+        // FIXME: localStorage is now unused, remove all occurences
+        // FIXME: might need fixes in auth cookies
 
+        let currentUserJSON = "{{.CurrentUser }}"
+        let currentUser = JSON.parse(currentUserJSON)
         if (currentUser) {
-            localStorage.setItem("currentUser", JSON.stringify(currentUser))
-            // $.cookie("Authorization", , { expires: 7, path: "/" })
-            document.cookie = `Authorization=${currentUser.Email}; expires=Sun, 1 Jan 2024 00:00:00 UTC; path=/`
-
             $("#currentUser").text(currentUser.Email)
         }
     </script>

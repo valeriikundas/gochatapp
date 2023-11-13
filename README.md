@@ -4,12 +4,24 @@
 
 - [ ] implement chat functionality using websockets
 
+- [ ] basic rendering tests for ui
+
+- [ ] use lib for mocking database 
+https://pkg.go.dev/github.com/DATA-DOG/go-sqlmock 
+https://tanutaran.medium.com/golang-unit-testing-with-gorm-and-sqlmock-postgresql-simplest-setup-67ccc7c056ef
+
+- [ ] deploy to aws
+    - [ ] using terraform
+    - [ ] using cloudformation?
+
 - [ ] use fiber auth middleware https://docs.gofiber.io/api/middleware/basicauth
 - [ ] add auth https://medium.com/@abhinavv.singh/a-comprehensive-guide-to-authentication-and-authorization-in-go-golang-6f783b4cea18
 - [ ] use JWT tokens
 - [ ] in general writing a chat app
 - [ ] write a signup in tdd fashion
 - [ ] use tdd, coverage to >90%
+https://medium.com/@engmiladkh1372/test-suite-for-unit-testing-gorm-in-go-47b6ea8d4ab0
+https://pkg.go.dev/github.com/stretchr/testify/suite
 
 
 
@@ -25,7 +37,6 @@ maybe use cache for storing lately accessed images
 - [ ] use protobufs
 - [ ] setup monkey testing
 - [ ] try BDD
-- [ ] deploy to aws
 - [ ] setup docker-compose
 - [ ] setup ci/cd
 - [ ] use all features of gorm
@@ -57,5 +68,8 @@ maybe use cache for storing lately accessed images
 - [ ] try out many of fiber middlewares
 - [ ] setup vscode's dev containers
 - [ ] improve knowledge of Makefile, bash scripting 
-
 - [x] setup linter for function length and code complexity
+- [ ] try using https://github.com/KillianLucas/open-interpreter/
+- [ ] can be interesting to add messaging library as alternative for manually implemented one https://github.com/centrifugal/centrifugo?tab=readme-ov-file
+- [ ] setup tls
+- [ ] find mockup to html tool e.g. https://github.com/SawyerHood/draw-a-ui

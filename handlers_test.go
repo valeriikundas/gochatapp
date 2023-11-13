@@ -13,10 +13,14 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/fasthttp/websocket"
+	fiberwebsocket "github.com/gofiber/contrib/websocket"
+	"github.com/posener/wstest"
+
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/adaptor"
 	"github.com/gofiber/fiber/v2/utils"
 	"github.com/gofiber/template/html/v2"
+	"github.com/gorilla/websocket"
 	"github.com/valyala/fasthttp"
 	"gorm.io/gorm"
 )
@@ -124,16 +128,10 @@ func TestChatsView(t *testing.T) {
 	_, err = addRandomChatWithUsers(DB)
 	utils.AssertEqual(t, nil, err)
 
-	user := users[0]
 	req := httptest.NewRequest(fiber.MethodGet, "/ui/chats", nil)
-	req.AddCookie(&http.Cookie{
-		Name:  "Authorization",
-		Value: user.Email,
-		Path:  "/",
-	})
 	resp, err := app.Test(req)
 	utils.AssertEqual(t, nil, err)
-	utils.AssertEqual(t, fiber.StatusOK, resp.StatusCode)
+	utils.AssertEqual(t, fiber.StatusOK, resp.StatusCode, "Status code")
 
 	// TODO: search chat name and users in html
 	// log.Printf("chat=%v\n", chat)
@@ -152,9 +150,14 @@ func TestGetChatView(t *testing.T) {
 	chat, err := addRandomChatWithUsers(DB)
 	utils.AssertEqual(t, nil, err)
 
-	resp, err := app.Test(httptest.NewRequest(fiber.MethodGet, fmt.Sprintf("/ui/chats/%d", chat.ID), nil))
+	user := users[0]
+	sessionCookie := getLoggedInUserSessionCookie(t, app, user)
+
+	req := httptest.NewRequest(fiber.MethodGet, fmt.Sprintf("/ui/chats/%d", chat.ID), nil)
+	req.AddCookie(sessionCookie)
+	resp, err := app.Test(req)
 	utils.AssertEqual(t, nil, err)
-	utils.AssertEqual(t, fiber.StatusOK, resp.StatusCode)
+	utils.AssertEqual(t, fiber.StatusOK, resp.StatusCode, "Status code")
 
 	// TODO: test html
 }
@@ -165,7 +168,8 @@ func TestGetChatViewWithoutWholeApp(t *testing.T) {
 		Views:       engine,
 		ViewsLayout: "layouts/base",
 	})
-	app.Get("/:chatId", ChatView)
+	app.Get("/ui/chats/:chatId", ChatView)
+	app.Post("/api/login", Login)
 	c := app.AcquireCtx(&fasthttp.RequestCtx{})
 	defer app.ReleaseCtx(c)
 
@@ -177,12 +181,24 @@ func TestGetChatViewWithoutWholeApp(t *testing.T) {
 	utils.AssertEqual(t, nil, err)
 
 	// TODO: test
-	log.Printf("%v\n", len(users))
+	// log.Printf("len(users)=%v\n", len(users))
 
 	chat, err := addRandomChatWithUsers(DB)
 	utils.AssertEqual(t, nil, err)
 
-	resp, err := app.Test(httptest.NewRequest(fiber.MethodGet, fmt.Sprintf("/%d", chat.ID), nil))
+	var editedChat Chat
+	err = DB.Find(&editedChat, chat.ID).Error
+	utils.AssertEqual(t, nil, err)
+
+	user := users[0]
+	sessionCookie := getLoggedInUserSessionCookie(t, app, user)
+
+	req := httptest.NewRequest(fiber.MethodGet, fmt.Sprintf("/ui/chats/%d", chat.ID), nil)
+	req.AddCookie(sessionCookie)
+	resp, err := app.Test(req)
+	utils.AssertEqual(t, nil, err, "app.Test()")
+
+	_, err = io.ReadAll(resp.Body)
 	utils.AssertEqual(t, nil, err)
 	utils.AssertEqual(t, fiber.StatusOK, resp.StatusCode, "Status code")
 
@@ -240,6 +256,8 @@ func TestJoinChat(t *testing.T) {
 }
 
 func TestSendMessageToWebsocket(t *testing.T) {
+	t.Skip("websockets are not implemented")
+
 	var clearDB func(*gorm.DB) error
 	DB, clearDB = prepareTestDb(t)
 	defer clearDB(DB)
@@ -270,39 +288,56 @@ func TestSendMessageToWebsocket(t *testing.T) {
 	utils.AssertEqual(t, fiber.StatusOK, resp.StatusCode)
 
 	// send message to chat
-	testServer := httptest.NewServer(http.HandlerFunc(websocketHandler))
+	testServer := httptest.NewServer(adaptor.FiberHandlerFunc(fiberwebsocket.New(WebsocketHandler)))
 	defer testServer.Close()
 
-	url := "ws" + strings.TrimPrefix(testServer.URL, "http") + "/ws"
-	conn, resp, err := websocket.DefaultDialer.Dial(url, nil)
-	utils.AssertEqual(t, nil, err)
-	defer conn.Close()
-	utils.AssertEqual(t, fiber.StatusSwitchingProtocols, resp.StatusCode)
-	b, err := io.ReadAll(resp.Body)
-	utils.AssertEqual(t, nil, err)
-	log.Printf("log response body1=%s\n", string(b))
+	// url := "ws" + strings.TrimPrefix(testServer.URL, "http") + "/ws"
+	// conn, resp, err := websocket.DefaultDialer.Dial(url, nil)
+	// utils.AssertEqual(t, nil, err)
+	// defer conn.Close()
+	// utils.AssertEqual(t, fiber.StatusSwitchingProtocols, resp.StatusCode)
+	// b, err := io.ReadAll(resp.Body)
+	// utils.AssertEqual(t, nil, err)
+	// log.Printf("log response body1=%s\n", string(b))
 
-	log.Printf("conn.LocalAddr()=%s", conn.LocalAddr())
+	// log.Printf("conn.LocalAddr()=%s", conn.LocalAddr())
 
-	url = "ws" + strings.TrimPrefix(testServer.URL, "http") + "/ws/5"
+	url := "ws" + strings.TrimPrefix(testServer.URL, "http") + "/ws/5"
 	log.Printf("log url=%s\n", url)
-	conn, resp, err = websocket.DefaultDialer.Dial(url, nil)
+	conn, resp, err := websocket.DefaultDialer.Dial(url, nil)
 	utils.AssertEqual(t, nil, err)
 	defer conn.Close()
 	utils.AssertEqual(t, fiber.StatusSwitchingProtocols, resp.StatusCode, "Status code")
 
-	b, err = io.ReadAll(resp.Body)
-	utils.AssertEqual(t, nil, err)
-	log.Printf("log response body2=%s\n", string(b))
+	// b, err := io.ReadAll(resp.Body)
+	// utils.AssertEqual(t, nil, err)
+	// log.Printf("log response body2=%s\n", string(b))
 
 	// v := map[string]any{
 	// 	"a": "b",
 	// 	"x": 123,
 	// }
 	// jsonData, err = json.Marshal(v)
-	utils.AssertEqual(t, nil, err)
-	err = conn.WriteMessage(websocket.TextMessage, []byte("hello"))
-	utils.AssertEqual(t, nil, err, "websocket WriteMessage failed")
+	// utils.AssertEqual(t, nil, err)
+	// log.Printf(" conn.WriteMessage\n")
+	// err = conn.WriteMessage(websocket.TextMessage, jsonData)
+	// utils.AssertEqual(t, nil, err, "websocket WriteMessage failed")
+
+	// Send message to server, read response and check to see if it's what we expect.
+	for i := 0; i < 10; i++ {
+		if err := conn.WriteMessage(websocket.TextMessage, []byte("hello")); err != nil {
+			t.Fatalf("%v", err)
+		}
+		_, p, err := conn.ReadMessage()
+		if err != nil {
+			t.Fatalf("%v", err)
+		}
+		if string(p) != "hello" {
+			t.Fatalf("bad message")
+		}
+	}
+
+	// test message was created in database
 }
 
 var upgrader = websocket.Upgrader{}
@@ -310,40 +345,19 @@ var upgrader = websocket.Upgrader{}
 func websocketHandler(w http.ResponseWriter, r *http.Request) {
 	c, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		log.Fatalf("websocket upgrade failed %s\n", err)
+		return
 	}
 	defer c.Close()
 
 	for {
-		messageType, p, err := c.ReadMessage()
+		mt, message, err := c.ReadMessage()
 		if err != nil {
-			// closeError, ok := err.(*websocket.CloseError)
-			// log.Printf("ok=%t code=%d text=%s error=%s\n", ok, closeError.Code, closeError.Text, closeError.Error())
-
-			// if websocket.IsCloseError(err, websocket.CloseAbnormalClosure) {
-			// 	log.Fatalf("IsCloseError err=%s\n", err)
-			// }
-
-			log.Fatalf("websocket read message failed %s\n", err)
 			break
 		}
+		log.Printf("websocket read message mt=%d msg=%s\n", mt, message)
 
-		// message := string(p)
-		// log.Printf("websocket received message type=%d messages=%s\n", messageType, message)
-
-		// data := map[string]any{
-		// 	"hello": "websocket",
-		// 	"a":     123,
-		// }
-		// _, err = json.Marshal(data)
-		// if err != nil {
-		// 	log.Fatalf("websocket json marshall failed err=%s\n", err)
-		// }
-		// log.Printf("will conn.WriteMessage type=%d data=%+v\n", messageType, data)
-
-		err = c.WriteMessage(messageType, p)
+		err = c.WriteMessage(mt, message)
 		if err != nil {
-			log.Fatalf("websocket write message failed %s\n", err)
 			break
 		}
 	}
@@ -395,4 +409,27 @@ func TestExample(t *testing.T) {
 			t.Fatalf("bad message")
 		}
 	}
+}
+
+// https://stackoverflow.com/questions/47637308/create-unit-test-for-ws-in-golang
+
+func TestHandler(t *testing.T) {
+	t.Skip()
+
+	dialer := wstest.NewDialer(adaptor.FiberHandler(fiberwebsocket.New(WebsocketHandler)))
+	url := "ws://whatever/ws"
+	conn, resp, err := dialer.Dial(url, nil)
+	utils.AssertEqual(t, nil, err)
+	defer conn.Close()
+	utils.AssertEqual(t, fiber.StatusSwitchingProtocols, resp.StatusCode)
+
+	data := map[string]any{
+		"hello": "world",
+	}
+	v, err := json.Marshal(data)
+	utils.AssertEqual(t, nil, err)
+	log.Printf("will write json\n")
+	err = conn.WriteJSON(v)
+	log.Printf("finished write json\n")
+	utils.AssertEqual(t, nil, err)
 }

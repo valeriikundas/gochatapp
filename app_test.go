@@ -71,21 +71,23 @@ func TestSendMessage(t *testing.T) {
 	err = DB.Save(&chat).Error
 	utils.AssertEqual(t, nil, err, "Chat save after add Member")
 
-	buf := new(bytes.Buffer)
+	// login user
+	sessionCookie := getLoggedInUserSessionCookie(t, app, *user)
+
 	messageContent := "hello"
 	data := SendMessageRequest{
 		UserEmail: user.Email,
 		Content:   messageContent,
 	}
-	err = json.NewEncoder(buf).Encode(data)
+	marshalled, err := json.Marshal(data)
 	utils.AssertEqual(t, nil, err)
+	buf1 := bytes.NewReader(marshalled)
 
-	req := httptest.NewRequest(fiber.MethodPost, fmt.Sprintf("/api/chats/%d", chat.ID), buf)
+	req := httptest.NewRequest(fiber.MethodPost, fmt.Sprintf("/api/chats/%d", chat.ID), buf1)
 	req.Header.Set("Content-Type", "application/json")
 	req.AddCookie(&http.Cookie{
-		Name:  "Authorization",
-		Value: user.Email,
-		Path:  "/",
+		Name:  sessionCookie.Name,
+		Value: sessionCookie.Value,
 	})
 	resp, err := app.Test(req)
 	utils.AssertEqual(t, nil, err)
@@ -107,4 +109,30 @@ func TestSendMessage(t *testing.T) {
 	utils.AssertEqual(t, messageContent, message.Content)
 	utils.AssertEqual(t, user.ID, message.FromID)
 	utils.AssertEqual(t, chat.ID, message.ChatID)
+}
+
+func getLoggedInUserSessionCookie(t *testing.T, app *fiber.App, user User) *http.Cookie {
+	loginData := LoginRequestSchema{
+		Email:    user.Email,
+		Password: user.Password,
+	}
+	b, err := json.Marshal(loginData)
+	utils.AssertEqual(t, nil, err)
+	buf := bytes.NewReader(b)
+
+	req := httptest.NewRequest(fiber.MethodPost, "/api/login", buf)
+	req.Header.Set("Content-Type", "application/json")
+	resp, err := app.Test(req)
+	utils.AssertEqual(t, nil, err)
+	utils.AssertEqual(t, fiber.StatusOK, resp.StatusCode, "Status code")
+
+	cookies := resp.Cookies()
+	var sessionCookie *http.Cookie
+	for i := 0; i < len(cookies); i += 1 {
+		if cookies[i].Name == SessionIDCookieKey {
+			sessionCookie = cookies[i]
+		}
+	}
+
+	return sessionCookie
 }

@@ -40,8 +40,10 @@
 
 <script>
     function joinChat(chatID) {
-        // TODO: store `userID` in cookies, later authorization token
-        const userEmail = document.cookie.split("; ").find(row => row.startsWith("Authorization"))?.split("=")[1]
+        // FIXME: get user from .CurrentUser
+        const currentUserJSON = `{{.CurrentUser}}`
+        const currentUser = JSON.parse(currentUserJSON)
+        const userEmail = currentUser.Email
 
         console.log("userEmail chatId ", userEmail, chatID)
 

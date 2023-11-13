@@ -4,12 +4,16 @@ go 1.20
 
 require (
 	github.com/brianvoe/gofakeit/v6 v6.24.0
+	github.com/gofiber/contrib/websocket v1.2.2
+	github.com/gorilla/websocket v1.5.1
 	github.com/pkg/errors v0.9.1
+	github.com/posener/wstest v1.2.0
 	github.com/valyala/fasthttp v1.50.0
 )
 
 require (
 	github.com/andybalholm/brotli v1.0.6 // indirect
+	github.com/fasthttp/websocket v1.5.6 // indirect
 	github.com/gofiber/template v1.8.2 // indirect
 	github.com/gofiber/utils v1.1.0 // indirect
 	github.com/google/uuid v1.4.0 // indirect
@@ -17,7 +21,7 @@ require (
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-runewidth v0.0.15 // indirect
 	github.com/rivo/uniseg v0.4.4 // indirect
-	github.com/stretchr/testify v1.8.4 // indirect
+	github.com/savsgio/gotils v0.0.0-20230208104028-c358bd845dee // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/tcplisten v1.0.0 // indirect
 )
