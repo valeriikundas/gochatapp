@@ -433,3 +433,113 @@ func TestHandler(t *testing.T) {
 	log.Printf("finished write json\n")
 	utils.AssertEqual(t, nil, err)
 }
+
+func TestPostLoginViewWithExistingUser(t *testing.T) {
+	var clearDB func(*gorm.DB) error
+	DB, clearDB = prepareTestDb(t)
+	defer clearDB(DB)
+
+	user, err := addRandomUser(DB, false)
+	utils.AssertEqual(t, nil, err)
+
+	engine := html.New("templates/", ".html")
+	app := fiber.New(fiber.Config{
+		Views:       engine,
+		ViewsLayout: "layouts/base",
+	})
+	app.Post("/ui/login", PostLoginView)
+
+	v := LoginRequestSchema{
+		Email:    user.Email,
+		Password: user.Password,
+	}
+	b, err := json.Marshal(v)
+	utils.AssertEqual(t, nil, err)
+	body := bytes.NewReader(b)
+	loginReq := httptest.NewRequest(fiber.MethodPost, "/ui/login", body)
+	loginReq.Header.Set("Content-Type", "application/json")
+	resp, err := app.Test(loginReq)
+	utils.AssertEqual(t, nil, err)
+	utils.AssertEqual(t, fiber.StatusOK, resp.StatusCode)
+
+	cookies := resp.Cookies()
+	var sessionCookie *http.Cookie
+	for _, c := range cookies {
+		if c.Name == SessionIDCookieKey {
+			sessionCookie = c
+		}
+	}
+
+	if sessionCookie == nil {
+		t.Error("empty session cookie")
+	}
+}
+
+func TestPostLoginViewWithNonExistingUser(t *testing.T) {
+	var clearDB func(*gorm.DB) error
+	DB, clearDB = prepareTestDb(t)
+	defer clearDB(DB)
+
+	engine := html.New("templates/", ".html")
+	app := fiber.New(fiber.Config{
+		Views:       engine,
+		ViewsLayout: "layouts/base",
+	})
+	app.Post("/ui/login", PostLoginView)
+
+	email := "test@test.com"
+	password := "pass"
+	v := LoginRequestSchema{
+		Email:    email,
+		Password: password,
+	}
+	b, err := json.Marshal(v)
+	utils.AssertEqual(t, nil, err)
+	body := bytes.NewReader(b)
+	loginReq := httptest.NewRequest(fiber.MethodPost, "/ui/login", body)
+	loginReq.Header.Set("Content-Type", "application/json")
+	resp, err := app.Test(loginReq)
+	utils.AssertEqual(t, nil, err)
+	utils.AssertEqual(t, fiber.StatusOK, resp.StatusCode)
+
+	cookies := resp.Cookies()
+	var sessionCookie *http.Cookie
+	for _, c := range cookies {
+		if c.Name == SessionIDCookieKey {
+			sessionCookie = c
+		}
+	}
+
+	if sessionCookie == nil {
+		t.Error("empty session cookie")
+	}
+
+	var createdUser User
+	err = DB.Where("Email = ?", email).Find(&createdUser).Error
+	utils.AssertEqual(t, nil, err)
+
+	utils.AssertEqual(t, email, createdUser.Email)
+	utils.AssertEqual(t, password, createdUser.Password)
+}
+
+func TestRenderUsers(t *testing.T) {
+	var clearDB func(*gorm.DB) error
+	DB, clearDB = prepareTestDb(t)
+	defer clearDB(DB)
+
+	engine := html.New("templates/", ".html")
+	app := fiber.New(fiber.Config{
+		Views:       engine,
+		ViewsLayout: "layouts/base",
+	})
+	app.Get("/ui/users", UsersView)
+
+	req := httptest.NewRequest(fiber.MethodGet, "/ui/users", nil)
+	resp, err := app.Test(req)
+	utils.AssertEqual(t, nil, err)
+	if resp.StatusCode != fiber.StatusOK {
+		b, err := io.ReadAll(resp.Body)
+		utils.AssertEqual(t, nil, err)
+		t.Errorf("Status code=%d, body=%v\n", resp.StatusCode, string(b))
+	}
+}

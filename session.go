@@ -40,5 +40,7 @@ func getLoggedInUser(c *fiber.Ctx) (*SessionCurrentUser, error) {
 		return nil, errors.Wrap(err, "json unmarshall")
 	}
 
+	// TODO: update fields from db
+
 	return sessionCurrentUser, err
 }

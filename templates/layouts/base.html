@@ -60,11 +60,7 @@
     </div>
 
     <script>
-        // FIXME: localStorage is now unused, remove all occurences
-        // FIXME: might need fixes in auth cookies
-
-        let currentUserJSON = "{{.CurrentUser }}"
-        let currentUser = JSON.parse(currentUserJSON)
+        let currentUser = {{.CurrentUser }}
         if (currentUser) {
             $("#currentUser").text(currentUser.Email)
         }

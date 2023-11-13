@@ -8,7 +8,7 @@
             <h3>View/hide chat members</h3>
         </summary>
         <div class="collapse-content">
-            {{template "users" .Chat.Members}}
+            {{template "components/user_list" .Chat.Members}}
         </div>
     </details>
 </div>
@@ -43,8 +43,17 @@
 
 <script>
     function sendMessage() {
-        let userEmail = document.cookie.split("; ").find(row => row.startsWith("Authorization="))?.split("=")[1]
-        console.log("AuthorizationCookie=", userEmail)
+        // TODO: check
+        // FIXME: get user email from .CurrentUser
+        alert("error: auth not implemented")
+        alert("send message")
+        let currentUserJSON = "{{.CurrentUser}}";
+        alert(currentUserJSON)
+        console.log("currentUserJSON=", currentUserJSON)
+        let currentUser = JSON.parse(currentUserJSON)
+        console.log("currentUser=", currentUser)
+        let userEmail = currentUser.Email
+        console.log("userEmail=", userEmail)
         let message = document.getElementById("message").value
 
         // TODO: wrap template vars read with error handling

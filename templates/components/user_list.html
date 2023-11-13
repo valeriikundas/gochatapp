@@ -1,0 +1,32 @@
+<div class="overflow-x-auto">
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Avatar</th>
+                <th>Name</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{range . }}
+            <tr>
+                <td>
+                    <div class="avatar">
+                        <div class="mask mask-squircle w-12 h-12">
+                            <img src="{{.AvatarURL}}"
+                                 alt="Avatar URL" />
+                        </div>
+                    </div>
+                </td>
+                <td>
+                    <div class="flex items-center space-x-3">
+                        <div>
+                            <div class="font-bold">{{.Name}}</div>
+                            <div class="text-sm opacity-50">{{.Email}}</div>
+                        </div>
+                    </div>
+                </td>
+            </tr>
+            {{end}}
+        </tbody>
+    </table>
+</div>

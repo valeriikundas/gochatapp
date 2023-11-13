@@ -40,9 +40,12 @@
 
 <script>
     function joinChat(chatID) {
+        // TODO: debug
         // FIXME: get user from .CurrentUser
-        const currentUserJSON = `{{.CurrentUser}}`
+        const currentUserJSON = "{{.CurrentUser}}"
+        alert(currentUserJSON)
         const currentUser = JSON.parse(currentUserJSON)
+        alert(currentUser)
         const userEmail = currentUser.Email
 
         console.log("userEmail chatId ", userEmail, chatID)

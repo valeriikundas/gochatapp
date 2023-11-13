@@ -12,6 +12,7 @@ import (
 )
 
 // TODO: split ui and api handlers
+// TODO: replace `log` with `github.com/gofiber/fiber/v2/log`
 
 func AllChatsView(c *fiber.Ctx) error {
 	sessionCurrentUser, err := getLoggedInUser(c)
@@ -45,7 +46,6 @@ func AllChatsView(c *fiber.Ctx) error {
 }
 
 func UserChatsView(c *fiber.Ctx) error {
-	// TODO: use `session` middleware instead of raw cookies
 	sessionCurrentUser, err := getLoggedInUser(c)
 	if err != nil {
 		return err
@@ -62,7 +62,8 @@ func UserChatsView(c *fiber.Ctx) error {
 	userChats := user.Chats
 
 	return c.Render("chats", fiber.Map{
-		"Chats": userChats,
+		"Chats":       userChats,
+		"CurrentUser": *sessionCurrentUser,
 	})
 }
 
@@ -72,8 +73,17 @@ func UsersView(c *fiber.Ctx) error {
 		return err
 	}
 
+	sessionCurrentUser, err := getLoggedInUser(c)
+	if err != nil {
+		_, isUnauthorizedUserError := err.(*UnauthorizedUserError)
+		if !isUnauthorizedUserError {
+			return err
+		}
+	}
+
 	return c.Render("users", fiber.Map{
-		"Users": users,
+		"Users":       users,
+		"CurrentUser": sessionCurrentUser,
 	})
 }
 
@@ -105,15 +115,15 @@ func ChatView(c *fiber.Ctx) error {
 
 	sessionCurrentUser, err := getLoggedInUser(c)
 	if err != nil {
-		return errors.Wrap(err, "getLoggedInUser`")
+		return errors.Wrap(err, "getLoggedInUser")
 	}
 
-	chatID, err := c.ParamsInt("chatId", -1)
+	chatID, err := c.ParamsInt("chatID", -1)
 	if err != nil {
 		return errors.Wrap(err, "ParamsInt")
 	}
 	if chatID == -1 {
-		return errors.New("chatId param missing in URL")
+		return errors.New("chatID param missing in URL")
 	}
 	var chat Chat
 	tx := DB.Preload("Members").Where("id = ?", chatID).Preload("Messages.From").First(&chat)
