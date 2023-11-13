@@ -2,26 +2,27 @@
 
 ## TODO:
 
-- [ ] implement chat functionality using websockets
+- [ ] implement chat functionality using websockets, no tests at first
 - [ ] basic rendering tests for ui
-- [ ] use lib for mocking database 
-    - [ ] https://pkg.go.dev/github.com/DATA-DOG/go-sqlmock 
-    - [ ] https://tanutaran.medium.com/golang-unit-testing-with-gorm-and-sqlmock-postgresql-simplest-setup-67ccc7c056ef
+- [ ] use lib for mocking database
+  - [ ] https://pkg.go.dev/github.com/DATA-DOG/go-sqlmock
+  - [ ] https://tanutaran.medium.com/golang-unit-testing-with-gorm-and-sqlmock-postgresql-simplest-setup-67ccc7c056ef
 - [ ] setup docker-compose
 - [ ] deploy to aws
-    - [ ] using terraform
-    - [ ] using cloudformation?
+  - [ ] using terraform
+  - [ ] using cloudformation?
 - [ ] use fiber auth middleware https://docs.gofiber.io/api/middleware/basicauth
 - [ ] add auth https://medium.com/@abhinavv.singh/a-comprehensive-guide-to-authentication-and-authorization-in-go-golang-6f783b4cea18
 - [ ] use JWT tokens
 - [ ] in general writing a chat app
+- [ ] read through Effective go https://go.dev/doc/effective_go#semicolons
 - [ ] write a signup in tdd fashion
 - [ ] use tdd, coverage to >90%
-    - [ ] https://medium.com/@engmiladkh1372/test-suite-for-unit-testing-gorm-in-go-47b6ea8d4ab0
-    - [ ] https://pkg.go.dev/github.com/stretchr/testify/suite
+  - [ ] https://medium.com/@engmiladkh1372/test-suite-for-unit-testing-gorm-in-go-47b6ea8d4ab0
+  - [ ] https://pkg.go.dev/github.com/stretchr/testify/suite
 - [ ] add photo storage: 2 options: postgresql, s3-like storage
-implement 2 options with interchangibility option
-maybe use cache for storing lately accessed images
+      implement 2 options with interchangibility option
+      maybe use cache for storing lately accessed images
 - [ ] add cache (e.g. redis)
 - [ ] add pubsub/message queue of some kind
 - [ ] auth with permissions roles (user, admin, chat admin)
@@ -59,7 +60,7 @@ maybe use cache for storing lately accessed images
 - [ ] add api versioning
 - [ ] try out many of fiber middlewares
 - [ ] setup vscode's dev containers
-- [ ] improve knowledge of Makefile, bash scripting 
+- [ ] improve knowledge of Makefile, bash scripting
 - [x] setup linter for function length and code complexity
 - [ ] try using https://github.com/KillianLucas/open-interpreter/
 - [ ] can be interesting to add messaging library as alternative for manually implemented one https://github.com/centrifugal/centrifugo?tab=readme-ov-file
