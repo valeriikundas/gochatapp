@@ -1,6 +1,6 @@
 <h1>Current user: <span id="currentUser"></span></h1>
 
-<h1 class="text-3xl">{{.Chat.Name}}</h1>
+<h1 class="text-3xl">{{ .Chat.Name }}</h1>
 
 <div>
     <details class="collapse bg-base-200">
@@ -41,43 +41,47 @@
 </div>
 
 
-<script>
+<script type="text/javascript">
+    let chatID = {{.Chat.ID }}
+
     function sendMessage() {
-        // TODO: check
-        // FIXME: get user email from .CurrentUser
-        alert("error: auth not implemented")
-        alert("send message")
-        let currentUserJSON = "{{.CurrentUser}}";
-        alert(currentUserJSON)
-        console.log("currentUserJSON=", currentUserJSON)
-        let currentUser = JSON.parse(currentUserJSON)
+        console.log("ws.readyState=", ws.readyState)
         console.log("currentUser=", currentUser)
         let userEmail = currentUser.Email
         console.log("userEmail=", userEmail)
         let message = document.getElementById("message").value
 
-        // TODO: wrap template vars read with error handling
-        $.ajax({
-            url: "/api/chats/{{.Chat.ID}}",
-            type: "POST",
-            data: {
-                user: userEmail,
-                content: message,
-            },
-            dataType: "json",
-        })
+        // let data = JSON.stringify({
+        //     "chatID": chatID,
+        //     "fromID": currentUser.ID,
+        //     "message": message,
+        // })
+        // console.log("ws.send data=", data)
+        ws.send("data")
 
-        location.reload()
+        // TODO: wrap template vars read with error handling
+        // $.ajax({
+        //     url: `/api/chats/${chatID}`,
+        //     type: "POST",
+        //     data: {
+        //         user: userEmail,
+        //         content: message,
+        //     },
+        //     dataType: "json",
+        // })
+
+        // location.reload()
     }
 </script>
 
 <form>
     <div class="container mx-auto flex items-center justify-center content-center my-6">
-        <textarea class="textarea textarea-bordered "
+        <textarea class="textarea textarea-bordered"
                   id="message"
                   name="message"
                   placeholder="write..."></textarea>
-        <button value="Submit"
+        <button type="button"
+                value="Send"
                 onclick="sendMessage()"
                 class="btn btn-primary btn-wide mx-8">Send</button>
     </div>

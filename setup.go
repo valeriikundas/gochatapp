@@ -48,7 +48,6 @@ func createApp(db *gorm.DB) *fiber.App {
 		AppName:     "GoChatApp",
 		Views:       htmlEngine,
 		ViewsLayout: "layouts/base",
-		// Global custom error handler
 		ErrorHandler: func(c *fiber.Ctx, err error) error {
 			log.Errorf("global error = %v\n", err.Error())
 			return c.Status(fiber.StatusBadRequest).JSON(GlobalErrorHandlerResponse{

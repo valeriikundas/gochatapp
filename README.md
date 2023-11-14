@@ -2,6 +2,7 @@
 
 ## TODO:
 
+- [ ] move computer mouse to right side to challenge the brain :)
 - [ ] implement chat functionality using websockets, no tests at first
 - [ ] basic rendering tests for ui
 - [ ] use lib for mocking database

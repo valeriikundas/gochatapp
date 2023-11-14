@@ -64,6 +64,25 @@
         if (currentUser) {
             $("#currentUser").text(currentUser.Email)
         }
+
+        let url = "ws://" + document.location.host + "/ws"
+        console.log("url=", url)
+        let ws = new WebSocket(url);
+        console.log("ws.readyState=", ws.readyState)
+        ws.onopen = (event) => {
+            console.log("onopen")
+            // ws.send("Hello Server!");
+        }
+        ws.onmessage = (event) => {
+            alert(event.data)
+            console.log("Message from server ", event);
+        }
+        ws.onclose = (event) => {
+            console.log("The connection has been closed successfully.", event);
+        }
+        ws.onerror = (event) => {
+            console.log("WebSocket error: ", event);
+        }
     </script>
 </body>
 
