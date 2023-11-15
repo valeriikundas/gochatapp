@@ -182,3 +182,20 @@ func selectRandomUsers(users []User, cnt int) []User {
 	}
 	return selectedUsers
 }
+
+func addRandomChatsForUser(user User, n int) ([]Chat, error) {
+	chats := make([]Chat, n)
+	for i := 0; i < n; i += 1 {
+		chats[i] = Chat{
+			Name:    gofakeit.Company(),
+			Members: []User{user},
+		}
+	}
+
+	tx := DB.Create(&chats)
+	if tx.Error != nil {
+		return nil, tx.Error
+	}
+
+	return chats, nil
+}

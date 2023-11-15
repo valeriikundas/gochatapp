@@ -2,9 +2,9 @@
 
 ## TODO:
 
-- [ ] move computer mouse to right side to challenge the brain :)
-- [ ] implement chat functionality using websockets, no tests at first
-- [ ] basic rendering tests for ui
+- [x] move computer mouse to right side to challenge the brain :)
+- [x] implement chat functionality using websockets, no tests at first
+- [x] basic rendering tests for ui
 - [ ] use lib for mocking database
   - [ ] https://pkg.go.dev/github.com/DATA-DOG/go-sqlmock
   - [ ] https://tanutaran.medium.com/golang-unit-testing-with-gorm-and-sqlmock-postgresql-simplest-setup-67ccc7c056ef
@@ -15,6 +15,7 @@
 - [ ] use fiber auth middleware https://docs.gofiber.io/api/middleware/basicauth
 - [ ] add auth https://medium.com/@abhinavv.singh/a-comprehensive-guide-to-authentication-and-authorization-in-go-golang-6f783b4cea18
 - [ ] use JWT tokens
+- [ ] read about golang project structure and set it up (cmd/,pkg/,internal/ etc)
 - [ ] in general writing a chat app
 - [ ] read through Effective go https://go.dev/doc/effective_go#semicolons
 - [ ] write a signup in tdd fashion
@@ -67,3 +68,6 @@
 - [ ] can be interesting to add messaging library as alternative for manually implemented one https://github.com/centrifugal/centrifugo?tab=readme-ov-file
 - [ ] setup tls
 - [ ] find mockup to html tool e.g. https://github.com/SawyerHood/draw-a-ui
+- [ ] learn vscode shortcuts i don't use from https://code.visualstudio.com/shortcuts/keyboard-shortcuts-macos.pdf
+- [ ] deploy some ML model using Go
+- [ ] try htmx

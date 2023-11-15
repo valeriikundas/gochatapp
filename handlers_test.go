@@ -22,7 +22,7 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-func testStatus200(t *testing.T, app *fiber.App, url, method string) {
+func testStatus200(t *testing.T, app *fiber.App, url, method string) []byte {
 	t.Helper()
 
 	req := httptest.NewRequest(method, url, nil)
@@ -30,17 +30,11 @@ func testStatus200(t *testing.T, app *fiber.App, url, method string) {
 	resp, err := app.Test(req)
 	utils.AssertEqual(t, nil, err, "app.Test(req)")
 	utils.AssertEqual(t, 200, resp.StatusCode, "Status code")
-}
 
-func testErrorResponse(t *testing.T, err error, resp *http.Response, expectedBodyError string) {
-	t.Helper()
-
-	utils.AssertEqual(t, nil, err, "app.Test(req)")
-	utils.AssertEqual(t, 500, resp.StatusCode, "Status code")
-
-	body, err := io.ReadAll(resp.Body)
+	b, err := io.ReadAll(resp.Body)
 	utils.AssertEqual(t, nil, err)
-	utils.AssertEqual(t, expectedBodyError, string(body), "Response body")
+
+	return b
 }
 
 func TestGetUsers(t *testing.T) {
@@ -316,26 +310,26 @@ func TestSendMessageToWebsocket(t *testing.T) {
 
 var upgrader = websocket.Upgrader{}
 
-func websocketHandler(w http.ResponseWriter, r *http.Request) {
-	c, err := upgrader.Upgrade(w, r, nil)
-	if err != nil {
-		return
-	}
-	defer c.Close()
+// func testWebsocketHandler(w http.ResponseWriter, r *http.Request) {
+// 	c, err := upgrader.Upgrade(w, r, nil)
+// 	if err != nil {
+// 		return
+// 	}
+// 	defer c.Close()
 
-	for {
-		mt, message, err := c.ReadMessage()
-		if err != nil {
-			break
-		}
-		log.Printf("websocket read message mt=%d msg=%s\n", mt, message)
+// 	for {
+// 		mt, message, err := c.ReadMessage()
+// 		if err != nil {
+// 			break
+// 		}
+// 		log.Printf("websocket read message mt=%d msg=%s\n", mt, message)
 
-		err = c.WriteMessage(mt, message)
-		if err != nil {
-			break
-		}
-	}
-}
+// 		err = c.WriteMessage(mt, message)
+// 		if err != nil {
+// 			break
+// 		}
+// 	}
+// }
 
 func echo(w http.ResponseWriter, r *http.Request) {
 	c, err := upgrader.Upgrade(w, r, nil)
@@ -492,4 +486,161 @@ func TestRenderUsers(t *testing.T) {
 		utils.AssertEqual(t, nil, err)
 		t.Errorf("Status code=%d, body=%v\n", resp.StatusCode, string(b))
 	}
+}
+
+func TestUserChatsView(t *testing.T) {
+	teardownTest, app := setupTest(t)
+	defer teardownTest()
+
+	user, err := addRandomUser(DB, false)
+	utils.AssertEqual(t, nil, err)
+
+	chatsCount := 9
+	_, err = addRandomChatsForUser(*user, chatsCount)
+	utils.AssertEqual(t, nil, err)
+
+	userID := user.ID
+
+	cookie := getLoggedInUserSessionCookie(t, app, *user)
+
+	req := httptest.NewRequest(fiber.MethodGet, fmt.Sprintf("/ui/users/%d/chats", userID), nil)
+	req.AddCookie(cookie)
+	resp, err := app.Test(req)
+	utils.AssertEqual(t, nil, err)
+	utils.AssertEqual(t, fiber.StatusOK, resp.StatusCode)
+
+	b, err := io.ReadAll(resp.Body)
+	utils.AssertEqual(t, nil, err)
+
+	cnt := strings.Count(string(b), "chat-row")
+	utils.AssertEqual(t, chatsCount, cnt)
+}
+
+func TestUserView(t *testing.T) {
+	teardownTest, app := setupTest(t)
+	defer teardownTest()
+
+	user, err := addRandomUser(DB, false)
+	utils.AssertEqual(t, nil, err)
+
+	chats, err := addRandomChatsForUser(*user, 5)
+	utils.AssertEqual(t, nil, err)
+
+	userID := user.ID
+	resp, err := app.Test(httptest.NewRequest(fiber.MethodGet, fmt.Sprintf("/ui/users/%d", userID), nil))
+	utils.AssertEqual(t, nil, err)
+	utils.AssertEqual(t, fiber.StatusOK, resp.StatusCode)
+
+	b, err := io.ReadAll(resp.Body)
+	utils.AssertEqual(t, nil, err)
+
+	html := string(b)
+
+	utils.AssertEqual(t, true, strings.Contains(html, user.Name))
+	utils.AssertEqual(t, true, strings.Contains(html, user.Email))
+	utils.AssertEqual(t, len(chats), strings.Count(html, "chat-row"))
+}
+
+func TestHomeView(t *testing.T) {
+	teardownTest, app := setupTest(t)
+	defer teardownTest()
+
+	resp, err := app.Test(httptest.NewRequest(fiber.MethodGet, "/ui", nil))
+	utils.AssertEqual(t, nil, err)
+	utils.AssertEqual(t, fiber.StatusOK, resp.StatusCode)
+}
+
+func TestRootHandler(t *testing.T) {
+	teardownTest, app := setupTest(t)
+	defer teardownTest()
+
+	resp, err := app.Test(httptest.NewRequest(fiber.MethodGet, "/", nil))
+	utils.AssertEqual(t, nil, err)
+	utils.AssertEqual(t, fiber.StatusPermanentRedirect, resp.StatusCode)
+}
+
+func TestGetUser(t *testing.T) {
+	teardownTest, app := setupTest(t)
+	defer teardownTest()
+
+	user, err := addRandomUser(DB, false)
+	utils.AssertEqual(t, nil, err)
+
+	chats, err := addRandomChatsForUser(*user, 5)
+	utils.AssertEqual(t, nil, err)
+
+	userID := user.ID
+
+	resp, err := app.Test(httptest.NewRequest(fiber.MethodGet, fmt.Sprintf("/api/users/%d", userID), nil))
+	utils.AssertEqual(t, nil, err)
+	utils.AssertEqual(t, fiber.StatusOK, resp.StatusCode)
+	utils.AssertEqual(t, "application/json", resp.Header.Get("Content-Type"))
+
+	b, err := io.ReadAll(resp.Body)
+	utils.AssertEqual(t, nil, err)
+
+	var v struct {
+		User User
+	}
+	err = json.Unmarshal(b, &v)
+	utils.AssertEqual(t, nil, err)
+	utils.AssertEqual(t, user.Name, v.User.Name)
+	utils.AssertEqual(t, user.Email, v.User.Email)
+	utils.AssertEqual(t, len(chats), len(v.User.Chats))
+}
+
+func TestCreateUser(t *testing.T) {
+	teardownTest, app := setupTest(t)
+	defer teardownTest()
+
+	userToCreate := User{
+		Name:  "test",
+		Email: "test@gmail.com",
+	}
+
+	b, err := json.Marshal(userToCreate)
+	utils.AssertEqual(t, nil, err)
+
+	body := bytes.NewReader(b)
+
+	req := httptest.NewRequest(fiber.MethodPost, "/api/users", body)
+	req.Header.Add("Content-Type", "application/json")
+	resp, err := app.Test(req)
+	utils.AssertEqual(t, nil, err)
+	utils.AssertEqual(t, fiber.StatusOK, resp.StatusCode, "Status code")
+
+	b, err = io.ReadAll(resp.Body)
+	utils.AssertEqual(t, nil, err)
+
+	var v User
+	err = json.Unmarshal(b, &v)
+	utils.AssertEqual(t, nil, err)
+
+	utils.AssertEqual(t, userToCreate.Name, v.Name)
+	utils.AssertEqual(t, userToCreate.Email, v.Email)
+}
+
+func TestGetChat(t *testing.T) {
+	teardownTest, app := setupTest(t)
+	defer teardownTest()
+
+	_, err := addRandomUsers(DB, 20)
+	utils.AssertEqual(t, nil, err)
+
+	chat, err := addRandomChatWithUsers(DB)
+	utils.AssertEqual(t, nil, err)
+
+	chatID := chat.ID
+
+	b := testStatus200(t, app, fmt.Sprintf("/api/chats/%d", chatID), fiber.MethodGet)
+
+	var v struct {
+		Chat Chat
+	}
+	err = json.Unmarshal(b, &v)
+	utils.AssertEqual(t, nil, err)
+
+	utils.AssertEqual(t, chat.ID, v.Chat.ID)
+	utils.AssertEqual(t, chat.Name, v.Chat.Name)
+	utils.AssertEqual(t, len(chat.Members), len(v.Chat.Members))
 }

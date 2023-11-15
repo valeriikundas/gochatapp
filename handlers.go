@@ -303,6 +303,7 @@ type FieldError struct {
 }
 
 func CreateUser(c *fiber.Ctx) error {
+	// TODO: create schemas for all models like UserBase, UserCreate, User
 	var user User
 	err := c.BodyParser(&user)
 	if err != nil {

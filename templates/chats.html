@@ -1,4 +1,4 @@
-{{$Mode := .Mode}}
+{{ $Mode := .Mode }}
 
 <div class="overflow-x-auto">
   <h2>Chats list</h2>
@@ -12,54 +12,57 @@
     </thead>
     <tbody>
       {{ range .Chats }}
-        <tr>
-          <td>
-            {{ .Name }}
-          </td>
-          <td>
-            <ul>
-              {{ range .Members }}
-                {{ if .Name }}
-                  <li>{{ .Name }}</li>
-                {{ else }}
-                  <li>{{ .Email }}</li>
-                {{ end }}
-              {{ end }}
-            </ul>
-          </td>
-          <td class="flex">
-            {{if eq $Mode "all"}}
-            <button onclick="joinChat({{ .ID }})" class="btn">Join</button>
-            {{end}}
+      <tr class="chat-row">
+        <td>
+          {{ .Name }}
+        </td>
+        <td>
+          <ul>
+            {{ range .Members }}
+            {{ if .Name }}
+            <li>{{ .Name }}</li>
+            {{ else }}
+            <li>{{ .Email }}</li>
+            {{ end }}
+            {{ end }}
+          </ul>
+        </td>
+        <td class="flex">
+          {{ if eq $Mode "all" }}
+          <button onclick="joinChat({{ .ID }})"
+                  class="btn">Join</button>
+          {{ end }}
 
-            <button onclick="viewChat({{ .ID }})" class="btn">View</button>
-          </td>
-        </tr>
+
+          <button onclick="viewChat({{ .ID }})"
+                  class="btn">View</button>
+        </td>
+      </tr>
       {{ end }}
     </tbody>
   </table>
 </div>
 
 <script>
-    function joinChat(chatID){
-        // TODO: debug
-        // FIXME: get user from .CurrentUser
-        const currentUser = {{.CurrentUser}}
-        console.log(currentUser)
-        const userEmail = currentUser.Email
+  function joinChat(chatID) {
+    // TODO: debug
+    // FIXME: get user from .CurrentUser
+    const currentUser = {{.CurrentUser }}
+    console.log(currentUser)
+    const userEmail = currentUser.Email
 
-        console.log("userEmail chatId ", userEmail, chatID)
+    console.log("userEmail chatId ", userEmail, chatID)
 
-        $.post({
-            url: `/api/chats/${chatID}/users/`,
-            dataType: "json",
-            data: {
-                email: userEmail
-            }
-        })
-    }
+    $.post({
+      url: `/api/chats/${chatID}/users/`,
+      dataType: "json",
+      data: {
+        email: userEmail
+      }
+    })
+  }
 
-    function viewChat(chatId) {
-        window.location.href = `/ui/chats/${chatId}`
-    }
+  function viewChat(chatId) {
+    window.location.href = `/ui/chats/${chatId}`
+  }
 </script>

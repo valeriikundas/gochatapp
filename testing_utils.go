@@ -1,13 +1,18 @@
 package main
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"log"
+	"net/http"
+	"net/http/httptest"
 	"os/exec"
 	"strings"
 	"testing"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/utils"
 	"gorm.io/gorm"
 )
 
@@ -47,7 +52,7 @@ func prepareTestDb(t *testing.T) (*gorm.DB, func(*gorm.DB) error) {
 	return DB, clearDB
 }
 
-func createDBCommand() *exec.Cmd {
+func CreateDBCommand() *exec.Cmd {
 	createCommand := fmt.Sprintf("createdb --host %s --port %d --user %s %s", "0.0.0.0", 5432, "valerii", "chatapp_test")
 	log.Println(createCommand)
 	createCommandSplit := strings.Split(createCommand, " ")
@@ -55,10 +60,36 @@ func createDBCommand() *exec.Cmd {
 	return createCmd
 }
 
-func dropDBCommand() *exec.Cmd {
+func DropDBCommand() *exec.Cmd {
 	command := "dropdb --host 0.0.0.0 --port 5432 --user valerii chatapp_test"
 	commandSplit := strings.Split(command, " ")
 	cmd := exec.Command(commandSplit[0], commandSplit[1:]...)
 	log.Println(cmd)
 	return cmd
+}
+
+func getLoggedInUserSessionCookie(t *testing.T, app *fiber.App, user User) *http.Cookie {
+	loginData := LoginRequestSchema{
+		Email:    user.Email,
+		Password: user.Password,
+	}
+	b, err := json.Marshal(loginData)
+	utils.AssertEqual(t, nil, err)
+	buf := bytes.NewReader(b)
+
+	req := httptest.NewRequest(fiber.MethodPost, "/api/login", buf)
+	req.Header.Set("Content-Type", "application/json")
+	resp, err := app.Test(req)
+	utils.AssertEqual(t, nil, err)
+	utils.AssertEqual(t, fiber.StatusOK, resp.StatusCode, "Status code")
+
+	cookies := resp.Cookies()
+	var sessionCookie *http.Cookie
+	for i := 0; i < len(cookies); i += 1 {
+		if cookies[i].Name == SessionIDCookieKey {
+			sessionCookie = cookies[i]
+		}
+	}
+
+	return sessionCookie
 }

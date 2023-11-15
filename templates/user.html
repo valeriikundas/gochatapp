@@ -32,7 +32,7 @@
             <table class="table">
                 <tbody>
                     {{range .User.Chats}}
-                    <tr>
+                    <tr class="chat-row">
                         <th>
                             <button onclick="location.href='/ui/chats/{{.ID}}'">
                                 {{.Name}}

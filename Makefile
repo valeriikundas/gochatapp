@@ -2,13 +2,16 @@ run:
 	go run .
 
 test:
-	go test
+	go test .
 
-cover:
-	go test -coverprofile=coverage.out
+cov-test:
+	go test -coverprofile=tmp/coverage.out
 
-report:
-	go tool cover -html=coverage.out
+cov-report: cov-test
+	go tool cover -html=tmp/coverage.out -o tmp/coverage.html
+
+cov-open: cov-test cov-report
+	open tmp/coverage.html
 
 redis:
 	docker run --name redis -p 6379:6379 -v ./data/redis:/data -d redis
