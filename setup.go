@@ -58,6 +58,7 @@ func createApp(db *gorm.DB) *fiber.App {
 	})
 
 	app.Use(IndentJSONResponseMiddleware)
+	app.Use("/ws", AssertWebSocketUpgradeMiddleware)
 
 	if !isTesting() {
 		app.Use(logger.New())

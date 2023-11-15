@@ -1,40 +1,41 @@
 # See https://pre-commit.com for more information
 # See https://pre-commit.com/hooks.html for more hooks
 repos:
--   repo: https://github.com/pre-commit/pre-commit-hooks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.5.0
     hooks:
-    -   id: trailing-whitespace
-    -   id: end-of-file-fixer
-    -   id: check-yaml
-    -   id: check-added-large-files
--   repo: local
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-added-large-files
+  - repo: local
     hooks:
-    -   id: go-test
+      - id: go-test
         name: run go tests
         language: system
         entry: go test
         types: [go]
-        files: '.go'
+        files: ".go"
         pass_filenames: false
-    -   id: go-lint
+      - id: go-lint
         name: lint go
         language: system
-        entry: golangci-lint run -e gocritic
+        entry: golangci-lint run -e gocritic .
         types: [go]
-        files: '.go'
+        files: ".go"
         pass_filenames: false
-    -   id: staticcheck
+      - id: staticcheck
         name: staticcheck
         language: system
         entry: staticcheck ./...
         types: [go]
-        files: '.go'
+        files: ".go"
         pass_filenames: false
-    -   id: gocyclo
+        exclude: "experimental/"
+      - id: gocyclo
         name: gocyclo
         language: system
         entry: gocyclo -over 10 .
         types: [go]
-        files: '.go'
+        files: ".go"
         pass_filenames: false

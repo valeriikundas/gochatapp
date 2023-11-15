@@ -1,6 +1,8 @@
 module gowebapp
 
-go 1.20
+go 1.21
+
+toolchain go1.21.4
 
 require (
 	github.com/brianvoe/gofakeit/v6 v6.24.0
@@ -41,7 +43,7 @@ require (
 	github.com/gofiber/template/html/v2 v2.0.5
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20221227161230-091c0ba34f0a // indirect
-	github.com/jackc/pgx/v5 v5.5.0 // indirect
+	github.com/jackc/pgx/v5 v5.5.0
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.5 // indirect
 	github.com/leodido/go-urn v1.2.4 // indirect

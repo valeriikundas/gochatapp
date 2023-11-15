@@ -1,4 +1,4 @@
-<h1>Current user: <span id="currentUser"></span></h1>
+<h1>Current user: <span id="currentUserInfo"></span></h1>
 
 <h1 class="text-3xl">{{ .Chat.Name }}</h1>
 
@@ -44,6 +44,28 @@
 <script type="text/javascript">
     let chatID = {{.Chat.ID }}
 
+    subscribeToChatMessages()
+
+    async function subscribeToChatMessages() {
+        let data = JSON.stringify({
+            "Type": "join_chat",
+            "ChatID": chatID,
+            "UserID": currentUser.ID,
+        })
+
+        while (typeof ws === 'undefined') {
+            console.log("wait for initialized ws")
+            await new Promise(r => setTimeout(r, 1000));
+        }
+
+        while (ws.readyState !== WebSocket.OPEN) {
+            console.log("waiting for open state")
+            await new Promise(r => setTimeout(r, 1000))
+        }
+
+        ws.send(data)
+    }
+
     function sendMessage() {
         console.log("ws.readyState=", ws.readyState)
         console.log("currentUser=", currentUser)
@@ -51,26 +73,15 @@
         console.log("userEmail=", userEmail)
         let message = document.getElementById("message").value
 
-        // let data = JSON.stringify({
-        //     "chatID": chatID,
-        //     "fromID": currentUser.ID,
-        //     "message": message,
-        // })
-        // console.log("ws.send data=", data)
-        ws.send("data")
+        let data = JSON.stringify({
+            "type": "send_message",
+            "chatID": chatID,
+            "userID": currentUser.ID,
+            "message": message,
+        })
+        ws.send(data)
 
         // TODO: wrap template vars read with error handling
-        // $.ajax({
-        //     url: `/api/chats/${chatID}`,
-        //     type: "POST",
-        //     data: {
-        //         user: userEmail,
-        //         content: message,
-        //     },
-        //     dataType: "json",
-        // })
-
-        // location.reload()
     }
 </script>
 

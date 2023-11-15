@@ -31,4 +31,6 @@ func setupRoutes(app *fiber.App) {
 	api.Post("/chats/:chatID", SendMessage)
 	api.Post("/users/:userID/avatar", UploadUserAvatar)
 	api.Post("/chats/:chatId/users/", JoinChat)
+
+	app.Get("/ws", websocket.New(WebsocketHandler))
 }
