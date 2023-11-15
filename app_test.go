@@ -12,7 +12,6 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/utils"
-	"gorm.io/gorm"
 )
 
 func TestAbs(t *testing.T) {
@@ -32,12 +31,11 @@ func TestFiber(t *testing.T) {
 }
 
 func TestGetChats(t *testing.T) {
-	var clearDB func(*gorm.DB) error
-	DB, clearDB = prepareTestDb(t)
-	defer clearDB(DB)
-	app := createApp(DB)
+	teardownTest, app := setupTest(t)
+	defer teardownTest()
 
-	generateRandomChats(t, DB)
+	err := generateRandomChats(t, DB)
+	utils.AssertEqual(t, nil, err)
 
 	resp, err := app.Test(httptest.NewRequest(fiber.MethodGet, "/api/chats", nil))
 	utils.AssertEqual(t, nil, err)
@@ -50,11 +48,8 @@ func TestGetChats(t *testing.T) {
 }
 
 func TestSendMessage(t *testing.T) {
-	var clearDB func(*gorm.DB) error
-	DB, clearDB = prepareTestDb(t)
-	defer clearDB(DB)
-
-	app := createApp(DB)
+	teardownTest, app := setupTest(t)
+	defer teardownTest()
 
 	// TODO: mock database during testing
 	// app := fiber.New(fiber.Config{})

@@ -7,8 +7,23 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/gofiber/fiber/v2"
 	"gorm.io/gorm"
 )
+
+// setupTest sets up fiber's App and DB
+func setupTest(t *testing.T) (func(), *fiber.App) {
+	var clearDB func(*gorm.DB) error
+	DB, clearDB = prepareTestDb(t)
+	app := createApp(DB)
+
+	return func() {
+		err := clearDB(DB)
+		if err != nil {
+			t.Error(err)
+		}
+	}, app
+}
 
 func clearDB(db *gorm.DB) error {
 	tables := []string{"messages", "chat_members", "chats", "users"}

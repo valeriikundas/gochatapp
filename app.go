@@ -28,7 +28,10 @@ func main() {
 
 	_, err := os.Stat("uploads/")
 	if os.IsNotExist(err) {
-		os.MkdirAll("./uploads", 0744)
+		err = os.MkdirAll("./uploads", 0744)
+		if err != nil {
+			panic(err)
+		}
 	}
 
 	DB = connectDatabase("chatapp")

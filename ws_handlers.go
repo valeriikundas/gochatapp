@@ -106,7 +106,10 @@ func WebsocketHandler(c *websocket.Conn) {
 				}
 
 				twentySecondFromNow := time.Now().Add(time.Second * 10)
-				memberConn.WriteControl(websocket.PingMessage, []byte("hello from the other side"), twentySecondFromNow)
+				err = memberConn.WriteControl(websocket.PingMessage, []byte("hello from the other side"), twentySecondFromNow)
+				if err != nil {
+					log.Fatal(err)
+				}
 
 				var fromUser User
 				err = DB.Find(&fromUser, userID).Error

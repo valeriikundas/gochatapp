@@ -19,10 +19,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/adaptor"
 	"github.com/gofiber/fiber/v2/utils"
-	"github.com/gofiber/template/html/v2"
 	"github.com/gorilla/websocket"
-	"github.com/valyala/fasthttp"
-	"gorm.io/gorm"
 )
 
 func testStatus200(t *testing.T, app *fiber.App, url, method string) {
@@ -47,10 +44,8 @@ func testErrorResponse(t *testing.T, err error, resp *http.Response, expectedBod
 }
 
 func TestGetUsers(t *testing.T) {
-	var clearDB func(*gorm.DB) error
-	DB, clearDB = prepareTestDb(t)
-	defer clearDB(DB)
-	app := createApp(DB)
+	teardownTest, app := setupTest(t)
+	defer teardownTest()
 
 	users, err := addRandomUsers(DB, 10)
 	utils.AssertEqual(t, nil, err)
@@ -64,17 +59,16 @@ func TestGetUsers(t *testing.T) {
 	var data struct {
 		Users []User
 	}
-	json.Unmarshal(bytes, &data)
+	err = json.Unmarshal(bytes, &data)
+	utils.AssertEqual(t, nil, err)
 	utils.AssertEqual(t, len(users), len(data.Users))
 	utils.AssertEqual(t, users[0].Name, data.Users[0].Name)
 	utils.AssertEqual(t, users[5].Name, data.Users[5].Name)
 }
 
 func TestUploadUserAvatar(t *testing.T) {
-	var clearDB func(*gorm.DB) error
-	DB, clearDB = prepareTestDb(t)
-	defer clearDB(DB)
-	app := createApp(DB)
+	teardownTest, app := setupTest(t)
+	defer teardownTest()
 
 	user, err := addRandomUser(DB, false)
 	utils.AssertEqual(t, nil, err)
@@ -116,10 +110,8 @@ func TestUploadUserAvatar(t *testing.T) {
 }
 
 func TestChatsView(t *testing.T) {
-	var clearDB func(*gorm.DB) error
-	DB, clearDB = prepareTestDb(t)
-	defer clearDB(DB)
-	app := createApp(DB)
+	teardownTest, app := setupTest(t)
+	defer teardownTest()
 
 	users, err := addRandomUsers(DB, 10)
 	utils.AssertEqual(t, nil, err)
@@ -138,10 +130,8 @@ func TestChatsView(t *testing.T) {
 }
 
 func TestGetChatView(t *testing.T) {
-	var clearDB func(*gorm.DB) error
-	DB, clearDB = prepareTestDb(t)
-	defer clearDB(DB)
-	app := createApp(DB)
+	teardownTest, app := setupTest(t)
+	defer teardownTest()
 
 	users, err := addRandomUsers(DB, 10)
 	utils.AssertEqual(t, nil, err)
@@ -163,19 +153,8 @@ func TestGetChatView(t *testing.T) {
 }
 
 func TestGetChatViewWithoutWholeApp(t *testing.T) {
-	engine := html.New("templates/", ".html")
-	app := fiber.New(fiber.Config{
-		Views:       engine,
-		ViewsLayout: "layouts/base",
-	})
-	app.Get("/ui/chats/:chatId", ChatView)
-	app.Post("/api/login", Login)
-	c := app.AcquireCtx(&fasthttp.RequestCtx{})
-	defer app.ReleaseCtx(c)
-
-	var clearDB func(*gorm.DB) error
-	DB, clearDB = prepareTestDb(t)
-	defer clearDB(DB)
+	teardownTest, app := setupTest(t)
+	defer teardownTest()
 
 	users, err := addRandomUsers(DB, 10)
 	utils.AssertEqual(t, nil, err)
@@ -210,11 +189,8 @@ func TestGetChatViewWithoutWholeApp(t *testing.T) {
 }
 
 func TestJoinChat(t *testing.T) {
-	var clearDB func(*gorm.DB) error
-	DB, clearDB = prepareTestDb(t)
-	defer clearDB(DB)
-
-	app := createApp(DB)
+	teardownTest, app := setupTest(t)
+	defer teardownTest()
 
 	user, err := addRandomUser(DB, false)
 	utils.AssertEqual(t, nil, err)
@@ -258,10 +234,8 @@ func TestJoinChat(t *testing.T) {
 func TestSendMessageToWebsocket(t *testing.T) {
 	t.Skip("websockets are not implemented")
 
-	var clearDB func(*gorm.DB) error
-	DB, clearDB = prepareTestDb(t)
-	defer clearDB(DB)
-	app := createApp(DB)
+	teardownTest, app := setupTest(t)
+	defer teardownTest()
 
 	users, err := addRandomUsers(DB, 10)
 	utils.AssertEqual(t, nil, err)
@@ -435,19 +409,11 @@ func TestHandler(t *testing.T) {
 }
 
 func TestPostLoginViewWithExistingUser(t *testing.T) {
-	var clearDB func(*gorm.DB) error
-	DB, clearDB = prepareTestDb(t)
-	defer clearDB(DB)
+	teardownTest, app := setupTest(t)
+	defer teardownTest()
 
 	user, err := addRandomUser(DB, false)
 	utils.AssertEqual(t, nil, err)
-
-	engine := html.New("templates/", ".html")
-	app := fiber.New(fiber.Config{
-		Views:       engine,
-		ViewsLayout: "layouts/base",
-	})
-	app.Post("/ui/login", PostLoginView)
 
 	v := LoginRequestSchema{
 		Email:    user.Email,
@@ -476,16 +442,8 @@ func TestPostLoginViewWithExistingUser(t *testing.T) {
 }
 
 func TestPostLoginViewWithNonExistingUser(t *testing.T) {
-	var clearDB func(*gorm.DB) error
-	DB, clearDB = prepareTestDb(t)
-	defer clearDB(DB)
-
-	engine := html.New("templates/", ".html")
-	app := fiber.New(fiber.Config{
-		Views:       engine,
-		ViewsLayout: "layouts/base",
-	})
-	app.Post("/ui/login", PostLoginView)
+	teardownTest, app := setupTest(t)
+	defer teardownTest()
 
 	email := "test@test.com"
 	password := "pass"
@@ -523,16 +481,8 @@ func TestPostLoginViewWithNonExistingUser(t *testing.T) {
 }
 
 func TestRenderUsers(t *testing.T) {
-	var clearDB func(*gorm.DB) error
-	DB, clearDB = prepareTestDb(t)
-	defer clearDB(DB)
-
-	engine := html.New("templates/", ".html")
-	app := fiber.New(fiber.Config{
-		Views:       engine,
-		ViewsLayout: "layouts/base",
-	})
-	app.Get("/ui/users", UsersView)
+	teardownTest, app := setupTest(t)
+	defer teardownTest()
 
 	req := httptest.NewRequest(fiber.MethodGet, "/ui/users", nil)
 	resp, err := app.Test(req)
