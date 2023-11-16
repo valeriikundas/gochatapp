@@ -310,6 +310,11 @@ func CreateUser(c *fiber.Ctx) error {
 		return err
 	}
 
+	validate, ok := c.Locals("validate").(*validator.Validate)
+	if !ok {
+		panic("casting *validator.Validate from c.Locals() failed")
+	}
+
 	err = validate.Struct(user)
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(err.Error())
@@ -400,6 +405,11 @@ func SendMessage(c *fiber.Ctx) error {
 	err = c.BodyParser(&data)
 	if err != nil {
 		return errors.Wrap(err, "BodyParser failed")
+	}
+
+	validate, ok := c.Locals("validate").(*validator.Validate)
+	if !ok {
+		panic("casting *validator.Validate from c.Locals() failed")
 	}
 
 	err = validate.Struct(data)

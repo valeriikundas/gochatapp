@@ -37,7 +37,7 @@ func connectDatabase(dbName string) *gorm.DB {
 func createApp(db *gorm.DB) *fiber.App {
 	setupLogger()
 
-	validate = validator.New()
+	validate := validator.New()
 
 	htmlEngine := html.New("templates/", ".html")
 
@@ -59,6 +59,11 @@ func createApp(db *gorm.DB) *fiber.App {
 
 	app.Use(IndentJSONResponseMiddleware)
 	app.Use("/ws", AssertWebSocketUpgradeMiddleware)
+
+	app.Use(func(c *fiber.Ctx) error {
+		c.Locals("validate", validate)
+		return c.Next()
+	})
 
 	if !isTesting() {
 		app.Use(logger.New())

@@ -5,14 +5,13 @@ import (
 	"log"
 	"os"
 
-	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2/middleware/session"
 	"github.com/gofiber/storage/redis/v3"
 	"gorm.io/gorm"
 )
 
+// TODO: remove these global variables
 var DB *gorm.DB
-var validate *validator.Validate
 var redisStorage = redis.New(redis.Config{
 	Host:     "0.0.0.0",
 	Port:     6379,

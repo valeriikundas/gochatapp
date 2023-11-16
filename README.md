@@ -5,13 +5,12 @@
 - [x] move computer mouse to right side to challenge the brain :)
 - [x] implement chat functionality using websockets, no tests at first
 - [x] basic rendering tests for ui
-- [ ] use lib for mocking database
-  - [ ] https://pkg.go.dev/github.com/DATA-DOG/go-sqlmock
-  - [ ] https://tanutaran.medium.com/golang-unit-testing-with-gorm-and-sqlmock-postgresql-simplest-setup-67ccc7c056ef
 - [ ] setup docker-compose
 - [ ] deploy to aws
   - [ ] using terraform
   - [ ] using cloudformation?
+  - [ ] fly.io ?
+  - [ ] encore.dev ?
 - [ ] use fiber auth middleware https://docs.gofiber.io/api/middleware/basicauth
 - [ ] add auth https://medium.com/@abhinavv.singh/a-comprehensive-guide-to-authentication-and-authorization-in-go-golang-6f783b4cea18
 - [ ] use JWT tokens
@@ -71,3 +70,4 @@
 - [ ] learn vscode shortcuts i don't use from https://code.visualstudio.com/shortcuts/keyboard-shortcuts-macos.pdf
 - [ ] deploy some ML model using Go
 - [ ] try htmx
+- [ ] write a few tests using mocks with https://pkg.go.dev/github.com/stretchr/testify/mock
