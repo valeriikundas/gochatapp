@@ -486,35 +486,7 @@ func PostLoginView(c *fiber.Ctx) error {
 	tx := DB.Where("Email = ?", data.Email).First(&user)
 	if errors.Is(tx.Error, gorm.ErrRecordNotFound) {
 		// NOTE: creating user if it does not exist for v1
-		createdUser := User{
-			Email:    data.Email,
-			Password: data.Password,
-		}
-		tx := DB.Create(&createdUser)
-		if tx.Error != nil {
-			return tx.Error
-		}
-
-		sessionCurrentUser := SessionCurrentUser{
-			ID:        createdUser.ID,
-			Name:      createdUser.Name,
-			Email:     createdUser.Email,
-			AvatarURL: createdUser.AvatarURL,
-		}
-		b, err := json.Marshal(sessionCurrentUser)
-		if err != nil {
-			return err
-		}
-		sessionCurrentUserJSON := string(b)
-		session.Set(SessionCurrentUserKey, sessionCurrentUserJSON)
-		err = session.Save()
-		if err != nil {
-			return err
-		}
-
-		return c.Render("home", fiber.Map{
-			"CurrentUser": createdUser,
-		})
+		return handleNewUserLogin(data, session, c)
 	} else if tx.Error != nil {
 		return tx.Error
 	}
@@ -538,6 +510,43 @@ func PostLoginView(c *fiber.Ctx) error {
 
 	return c.Render("home", fiber.Map{
 		"CurrentUser": user,
+	})
+}
+
+func handleNewUserLogin(data struct {
+	Email    string
+	Password string
+}, session *session.Session, c *fiber.Ctx) error {
+	// password is not used anywhere
+
+	createdUser := User{
+		Email:    data.Email,
+		Password: data.Password,
+	}
+	tx := DB.Create(&createdUser)
+	if tx.Error != nil {
+		return tx.Error
+	}
+
+	sessionCurrentUser := SessionCurrentUser{
+		ID:        createdUser.ID,
+		Name:      createdUser.Name,
+		Email:     createdUser.Email,
+		AvatarURL: createdUser.AvatarURL,
+	}
+	b, err := json.Marshal(sessionCurrentUser)
+	if err != nil {
+		return err
+	}
+	sessionCurrentUserJSON := string(b)
+	session.Set(SessionCurrentUserKey, sessionCurrentUserJSON)
+	err = session.Save()
+	if err != nil {
+		return err
+	}
+
+	return c.Render("home", fiber.Map{
+		"CurrentUser": createdUser,
 	})
 }
 
