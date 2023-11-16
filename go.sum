@@ -29,8 +29,6 @@ github.com/gofiber/contrib/websocket v1.2.2 h1:6lygrypMM0LqfPUC8N5MZ5apsU9/3K/NJ
 github.com/gofiber/contrib/websocket v1.2.2/go.mod h1:QPOQ5qazfR/oz7FZD4p5PO9B8TaxjAnaUG/xpbFI1r4=
 github.com/gofiber/fiber/v2 v2.50.0 h1:ia0JaB+uw3GpNSCR5nvC5dsaxXjRU5OEu36aytx+zGw=
 github.com/gofiber/fiber/v2 v2.50.0/go.mod h1:21eytvay9Is7S6z+OgPi7c7n4++tnClWmhpimVHMimw=
-github.com/gofiber/storage/redis v1.3.4 h1:IUNx09vnLiI1wZ/z3Dl5lYPrFdFgtgkAqG26wyIrwNI=
-github.com/gofiber/storage/redis v1.3.4/go.mod h1:lidaD5cHTNzYwzudWN0LN0wGYsrwpMpXClwE795xWSo=
 github.com/gofiber/storage/redis/v3 v3.1.0 h1:URly7BB1TVz15vPy2R1Q6vBqI53cDiD6p5qKZX/hpog=
 github.com/gofiber/storage/redis/v3 v3.1.0/go.mod h1:HQ2wqleiIwb0Fbssq2T3v5DBiNlDZsCihWOuVmguIbg=
 github.com/gofiber/template v1.8.2 h1:PIv9s/7Uq6m+Fm2MDNd20pAFFKt5wWs7ZBd8iV9pWwk=

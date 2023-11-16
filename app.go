@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 
+	"github.com/gofiber/storage/redis/v3"
 	"gorm.io/gorm"
 )
 
@@ -33,6 +34,13 @@ func main() {
 		return
 	}
 
-	app := createApp(DB)
+	redisDB := redis.New(redis.Config{
+		Host:     "0.0.0.0",
+		Port:     6379,
+		Username: "valeriikundas",
+		Database: 0,
+	})
+
+	app := createApp(DB, redisDB)
 	log.Fatal(app.Listen("0.0.0.0:3000"))
 }

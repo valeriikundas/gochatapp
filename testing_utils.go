@@ -13,6 +13,7 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/utils"
+	"github.com/gofiber/storage/redis/v3"
 	"gorm.io/gorm"
 )
 
@@ -20,13 +21,33 @@ import (
 func setupTest(t *testing.T) (func(), *fiber.App) {
 	var clearDB func(*gorm.DB) error
 	DB, clearDB = prepareTestDb(t)
-	app := createApp(DB)
+
+	// TODO: load config from file
+
+	// TODO: write test for session store
+
+	redisDB := redis.New(redis.Config{
+		Host:     "0.0.0.0",
+		Port:     6379,
+		Username: "valeriikundas",
+		Database: 5,
+	})
+
+	app := createApp(DB, redisDB)
 
 	return func() {
+		// TODO: errors in this func should not affect next functions. how to do that?
+
 		err := clearDB(DB)
 		if err != nil {
 			t.Error(err)
 		}
+
+		err = redisDB.Reset()
+		if err != nil {
+			t.Error(err)
+		}
+
 	}, app
 }
 

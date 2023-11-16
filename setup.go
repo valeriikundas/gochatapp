@@ -11,7 +11,7 @@ import (
 	"github.com/gofiber/fiber/v2/log"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/gofiber/fiber/v2/middleware/session"
-	"github.com/gofiber/storage/redis"
+	"github.com/gofiber/storage/redis/v3"
 	"github.com/gofiber/template/html/v2"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -36,7 +36,7 @@ func connectDatabase(dbName string) *gorm.DB {
 	return db
 }
 
-func createApp(db *gorm.DB) *fiber.App {
+func createApp(db *gorm.DB, redisDB *redis.Storage) *fiber.App {
 	setupLogger()
 
 	htmlEngine := html.New("templates/", ".html")
@@ -64,16 +64,9 @@ func createApp(db *gorm.DB) *fiber.App {
 		validate := validator.New()
 		c.Locals("validate", validate)
 
-		// TODO: setup test redis
-
-		var redisStorage = redis.New(redis.Config{
-			Host:     "0.0.0.0",
-			Port:     6379,
-			Username: "valeriikundas",
-		})
 		// TODO: rename to `sessionStore` soon
 		var store = session.New(session.Config{
-			Storage: redisStorage,
+			Storage: redisDB,
 		})
 		c.Locals("store", store)
 
