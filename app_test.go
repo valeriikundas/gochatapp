@@ -31,10 +31,10 @@ func TestFiber(t *testing.T) {
 }
 
 func TestGetChats(t *testing.T) {
-	teardownTest, app := setupTest(t)
+	app, db, teardownTest := setupTest(t)
 	defer teardownTest()
 
-	err := generateRandomChats(t, DB)
+	err := generateRandomChats(t, db)
 	utils.AssertEqual(t, nil, err)
 
 	resp, err := app.Test(httptest.NewRequest(fiber.MethodGet, "/api/chats", nil))
@@ -48,22 +48,22 @@ func TestGetChats(t *testing.T) {
 }
 
 func TestSendMessage(t *testing.T) {
-	teardownTest, app := setupTest(t)
+	app, db, teardownTest := setupTest(t)
 	defer teardownTest()
 
 	// TODO: mock database during testing
 	// app := fiber.New(fiber.Config{})
 	// app.Add(fiber.MethodPost, "/api/chat/:chatID", SendMessage)
 
-	user, err := addRandomUser(DB, false)
+	user, err := addRandomUser(db, false)
 	utils.AssertEqual(t, nil, err)
 
-	chat, err := addRandomChatWithNoUsers(DB)
+	chat, err := addRandomChatWithNoUsers(db)
 	utils.AssertEqual(t, nil, err)
 
-	err = DB.Model(&chat).Association("Members").Append(&user)
+	err = db.Model(&chat).Association("Members").Append(&user)
 	utils.AssertEqual(t, nil, err, "Chat add Member")
-	err = DB.Save(&chat).Error
+	err = db.Save(&chat).Error
 	utils.AssertEqual(t, nil, err, "Chat save after add Member")
 
 	// login user
@@ -98,7 +98,7 @@ func TestSendMessage(t *testing.T) {
 	utils.AssertEqual(t, nil, err, fmt.Sprintf("%+v", sendMessageResponse))
 
 	var message Message
-	tx := DB.Find(&message)
+	tx := db.Find(&message)
 	utils.AssertEqual(t, nil, tx.Error)
 	utils.AssertEqual(t, message.ID, sendMessageResponse.ID)
 	utils.AssertEqual(t, messageContent, message.Content)

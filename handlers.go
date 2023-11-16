@@ -16,6 +16,11 @@ import (
 // TODO: replace `log` with `github.com/gofiber/fiber/v2/log`
 
 func AllChatsView(c *fiber.Ctx) error {
+	db, ok := c.Locals("db").(*gorm.DB)
+	if !ok {
+		log.Fatal("error getting `db` from c.Locals()")
+	}
+
 	sessionCurrentUser, err := getLoggedInUser(c)
 	_, isUnauthorizedUserError := err.(*UnauthorizedUserError)
 	if err != nil {
@@ -25,7 +30,7 @@ func AllChatsView(c *fiber.Ctx) error {
 	}
 
 	var chats []Chat
-	tx := DB.Model(&Chat{}).Preload("Members").Find(&chats)
+	tx := db.Model(&Chat{}).Preload("Members").Find(&chats)
 	if tx.Error != nil {
 		return tx.Error
 	}
@@ -34,7 +39,7 @@ func AllChatsView(c *fiber.Ctx) error {
 	if sessionCurrentUser != nil {
 		userEmail := sessionCurrentUser.Email
 
-		tx = DB.Where("Email = ?", userEmail).First(&user)
+		tx = db.Where("Email = ?", userEmail).First(&user)
 		if tx.Error != nil {
 			return errors.Wrap(tx.Error, "User not found")
 		}
@@ -48,6 +53,11 @@ func AllChatsView(c *fiber.Ctx) error {
 }
 
 func UserChatsView(c *fiber.Ctx) error {
+	db, ok := c.Locals("db").(*gorm.DB)
+	if !ok {
+		log.Fatal("error getting `db` from c.Locals()")
+	}
+
 	sessionCurrentUser, err := getLoggedInUser(c)
 	if err != nil {
 		return err
@@ -56,7 +66,7 @@ func UserChatsView(c *fiber.Ctx) error {
 	userEmail := sessionCurrentUser.Email
 
 	var user User
-	err = DB.Preload("Chats.Members").Where("Email = ?", userEmail).First(&user).Error
+	err = db.Preload("Chats.Members").Where("Email = ?", userEmail).First(&user).Error
 	if err != nil {
 		return errors.Wrap(err, "Get user by email")
 	}
@@ -71,7 +81,12 @@ func UserChatsView(c *fiber.Ctx) error {
 }
 
 func UsersView(c *fiber.Ctx) error {
-	users, err := getUsers()
+	db, ok := c.Locals("db").(*gorm.DB)
+	if !ok {
+		log.Fatal("error getting `db` from c.Locals()")
+	}
+
+	users, err := getUsers(db)
 	if err != nil {
 		return err
 	}
@@ -91,13 +106,18 @@ func UsersView(c *fiber.Ctx) error {
 }
 
 func UserView(c *fiber.Ctx) error {
+	db, ok := c.Locals("db").(*gorm.DB)
+	if !ok {
+		log.Fatal("error getting `db` from c.Locals()")
+	}
+
 	var user User
 	userID, err := c.ParamsInt("userID")
 	if err != nil {
 		return err
 	}
 	// TODO: load members only for one queried record
-	tx := DB.Preload("Chats").Preload("Chats.Members").First(&user, userID)
+	tx := db.Preload("Chats").Preload("Chats.Members").First(&user, userID)
 	if tx.Error != nil {
 		return tx.Error
 	}
@@ -116,6 +136,11 @@ func ChatView(c *fiber.Ctx) error {
 	// TODO: leave chat feature
 	// TODO: bots that talk live
 
+	db, ok := c.Locals("db").(*gorm.DB)
+	if !ok {
+		log.Fatal("error getting `db` from c.Locals()")
+	}
+
 	sessionCurrentUser, err := getLoggedInUser(c)
 	if err != nil {
 		return errors.Wrap(err, "getLoggedInUser")
@@ -129,7 +154,7 @@ func ChatView(c *fiber.Ctx) error {
 		return errors.New("chatID param missing in URL")
 	}
 	var chat Chat
-	tx := DB.Preload("Members").Where("id = ?", chatID).Preload("Messages.From").First(&chat)
+	tx := db.Preload("Members").Where("id = ?", chatID).Preload("Messages.From").First(&chat)
 	if tx.Error != nil {
 		return errors.Wrap(tx.Error, "get chat by id")
 	}
@@ -137,7 +162,7 @@ func ChatView(c *fiber.Ctx) error {
 	var user *User
 	if sessionCurrentUser != nil {
 		// todo: implement current user functionality
-		tx = DB.Where("Email = ?", sessionCurrentUser.Email).First(&user)
+		tx = db.Where("Email = ?", sessionCurrentUser.Email).First(&user)
 		if errors.Is(tx.Error, gorm.ErrRecordNotFound) {
 			return errors.Wrap(tx.Error, "User not found")
 		} else if tx.Error != nil {
@@ -177,6 +202,11 @@ func ChatView(c *fiber.Ctx) error {
 }
 
 func HomeView(c *fiber.Ctx) error {
+	db, ok := c.Locals("db").(*gorm.DB)
+	if !ok {
+		log.Fatal("error getting `db` from c.Locals()")
+	}
+
 	sessionCurrentUser, err := getLoggedInUser(c)
 	if err != nil {
 		_, isUnauthorizedUserError := err.(*UnauthorizedUserError)
@@ -190,7 +220,7 @@ func HomeView(c *fiber.Ctx) error {
 	var currentUser *User
 	if sessionCurrentUser != nil {
 		userEmail := sessionCurrentUser.Email
-		err = DB.Where("Email = ?", userEmail).First(&currentUser).Error
+		err = db.Where("Email = ?", userEmail).First(&currentUser).Error
 		if err != nil {
 			return errors.Wrap(err, "Get user by email")
 		}
@@ -201,9 +231,9 @@ func HomeView(c *fiber.Ctx) error {
 	})
 }
 
-func getUsers() ([]User, error) {
+func getUsers(db *gorm.DB) ([]User, error) {
 	var users []User
-	tx := DB.Find(&users)
+	tx := db.Find(&users)
 	if tx.Error != nil {
 		return nil, tx.Error
 	}
@@ -217,11 +247,9 @@ type LoginRequestSchema struct {
 }
 
 func Login(c *fiber.Ctx) error {
-	// TODO: implement passwords
-	var loginData LoginRequestSchema
-	err := c.BodyParser(&loginData)
-	if err != nil {
-		return errors.Wrap(err, "BodyParser")
+	db, ok := c.Locals("db").(*gorm.DB)
+	if !ok {
+		log.Fatal("error getting `db` from c.Locals()")
 	}
 
 	store, ok := c.Locals("store").(*session.Store)
@@ -234,8 +262,15 @@ func Login(c *fiber.Ctx) error {
 		return err
 	}
 
+	// TODO: implement passwords
+	var loginData LoginRequestSchema
+	err = c.BodyParser(&loginData)
+	if err != nil {
+		return errors.Wrap(err, "BodyParser")
+	}
+
 	var user User
-	err = DB.Where("Email = ?", loginData.Email).Find(&user).Error
+	err = db.Where("Email = ?", loginData.Email).Find(&user).Error
 	if err != nil {
 		return errors.Wrap(err, "Get user by email")
 	}
@@ -264,7 +299,12 @@ func Login(c *fiber.Ctx) error {
 }
 
 func GetUsers(c *fiber.Ctx) error {
-	users, err := getUsers()
+	db, ok := c.Locals("db").(*gorm.DB)
+	if !ok {
+		log.Fatal("error getting `db` from c.Locals()")
+	}
+
+	users, err := getUsers(db)
 	if err != nil {
 		return err
 	}
@@ -289,12 +329,17 @@ type ChatResponse struct {
 }
 
 func GetUser(c *fiber.Ctx) error {
+	db, ok := c.Locals("db").(*gorm.DB)
+	if !ok {
+		log.Fatal("error getting `db` from c.Locals()")
+	}
+
 	var user User
 	userID, err := c.ParamsInt("userID")
 	if err != nil {
 		return err
 	}
-	tx := DB.Preload("Chats").First(&user, userID)
+	tx := db.Preload("Chats").First(&user, userID)
 	if tx.Error != nil {
 		return tx.Error
 	}
@@ -309,6 +354,11 @@ type FieldError struct {
 }
 
 func CreateUser(c *fiber.Ctx) error {
+	db, ok := c.Locals("db").(*gorm.DB)
+	if !ok {
+		log.Fatal("error getting `db` from c.Locals()")
+	}
+
 	// TODO: create schemas for all models like UserBase, UserCreate, User
 	var user User
 	err := c.BodyParser(&user)
@@ -337,7 +387,7 @@ func CreateUser(c *fiber.Ctx) error {
 	// 	}
 	// 	return c.Status(fiber.StatusBadRequest).JSON(errors)
 	// }
-	tx := DB.Create(&user)
+	tx := db.Create(&user)
 	if tx.Error != nil {
 		return tx.Error
 	}
@@ -349,9 +399,14 @@ type GetChatsResponse struct {
 }
 
 func GetChats(c *fiber.Ctx) error {
+	db, ok := c.Locals("db").(*gorm.DB)
+	if !ok {
+		log.Fatal("error getting `db` from c.Locals()")
+	}
+
 	var chats []Chat
 	ch := &Chat{}
-	model := DB.Model(ch)
+	model := db.Model(ch)
 	query := model.Preload("Members")
 	tx := query.Find(&chats)
 	if tx.Error != nil {
@@ -364,6 +419,11 @@ func GetChats(c *fiber.Ctx) error {
 }
 
 func GetChat(c *fiber.Ctx) error {
+	db, ok := c.Locals("db").(*gorm.DB)
+	if !ok {
+		log.Fatal("error getting `db` from c.Locals()")
+	}
+
 	var params struct {
 		ChatID uint
 	}
@@ -373,7 +433,7 @@ func GetChat(c *fiber.Ctx) error {
 	}
 
 	var chat Chat
-	err = DB.Preload("Members").First(&chat, params.ChatID).Error
+	err = db.Preload("Members").First(&chat, params.ChatID).Error
 	if err != nil {
 		return err
 	}
@@ -389,6 +449,11 @@ type SendMessageRequest struct {
 }
 
 func SendMessage(c *fiber.Ctx) error {
+	db, ok := c.Locals("db").(*gorm.DB)
+	if !ok {
+		log.Fatal("error getting `db` from c.Locals()")
+	}
+
 	sessionCurrentUser, err := getLoggedInUser(c)
 	if err != nil {
 		_, isUnauthorizedUserError := err.(*UnauthorizedUserError)
@@ -434,7 +499,7 @@ func SendMessage(c *fiber.Ctx) error {
 
 	userEmail := sessionCurrentUser.Email
 	var user User
-	tx := DB.Where("Email = ?", userEmail).First(&user)
+	tx := db.Where("Email = ?", userEmail).First(&user)
 	if tx.Error != nil {
 		return tx.Error
 	}
@@ -444,7 +509,7 @@ func SendMessage(c *fiber.Ctx) error {
 		FromID:  user.ID,
 		Content: data.Content,
 	}
-	tx = DB.Create(&message)
+	tx = db.Create(&message)
 	if tx.Error != nil {
 		return errors.Wrap(tx.Error, "db create message failed")
 	}
@@ -462,11 +527,18 @@ func LoginView(c *fiber.Ctx) error {
 	return c.Render("login", fiber.Map{})
 }
 
+type UserAuthSchema struct {
+	Email    string
+	Password string
+}
+
 func PostLoginView(c *fiber.Ctx) error {
-	var data struct {
-		Email    string
-		Password string
+	db, ok := c.Locals("db").(*gorm.DB)
+	if !ok {
+		log.Fatal("error getting `db` from c.Locals()")
 	}
+
+	var data UserAuthSchema
 	err := c.BodyParser(&data)
 	if err != nil {
 		return err
@@ -483,10 +555,10 @@ func PostLoginView(c *fiber.Ctx) error {
 	}
 
 	var user *User
-	tx := DB.Where("Email = ?", data.Email).First(&user)
+	tx := db.Where("Email = ?", data.Email).First(&user)
 	if errors.Is(tx.Error, gorm.ErrRecordNotFound) {
 		// NOTE: creating user if it does not exist for v1
-		return handleNewUserLogin(data, session, c)
+		return handleNewUserLogin(c, db, session, data)
 	} else if tx.Error != nil {
 		return tx.Error
 	}
@@ -513,17 +585,14 @@ func PostLoginView(c *fiber.Ctx) error {
 	})
 }
 
-func handleNewUserLogin(data struct {
-	Email    string
-	Password string
-}, session *session.Session, c *fiber.Ctx) error {
+func handleNewUserLogin(c *fiber.Ctx, db *gorm.DB, session *session.Session, data UserAuthSchema) error {
 	// password is not used anywhere
 
 	createdUser := User{
 		Email:    data.Email,
 		Password: data.Password,
 	}
-	tx := DB.Create(&createdUser)
+	tx := db.Create(&createdUser)
 	if tx.Error != nil {
 		return tx.Error
 	}
@@ -551,6 +620,11 @@ func handleNewUserLogin(data struct {
 }
 
 func UploadUserAvatar(c *fiber.Ctx) error {
+	db, ok := c.Locals("db").(*gorm.DB)
+	if !ok {
+		log.Fatal("error getting `db` from c.Locals()")
+	}
+
 	file, err := c.FormFile("image")
 	if err != nil {
 		return err
@@ -569,7 +643,7 @@ func UploadUserAvatar(c *fiber.Ctx) error {
 	}
 
 	userID := c.Params("userID")
-	tx := DB.Model(&User{}).Where("id = ?", userID).Update("AvatarURL", fmt.Sprintf("/%s", fileName))
+	tx := db.Model(&User{}).Where("id = ?", userID).Update("AvatarURL", fmt.Sprintf("/%s", fileName))
 	if tx.Error != nil {
 		return tx.Error
 	}
@@ -580,6 +654,11 @@ func UploadUserAvatar(c *fiber.Ctx) error {
 }
 
 func JoinChat(c *fiber.Ctx) error {
+	db, ok := c.Locals("db").(*gorm.DB)
+	if !ok {
+		log.Fatal("error getting `db` from c.Locals()")
+	}
+
 	var body struct {
 		Email string
 	}
@@ -590,7 +669,7 @@ func JoinChat(c *fiber.Ctx) error {
 	}
 
 	var user User
-	tx := DB.Where("Email = ?", body.Email).First(&user)
+	tx := db.Where("Email = ?", body.Email).First(&user)
 	if tx.Error != nil {
 		return errors.Wrap(tx.Error, "Filter User by Email")
 	}
@@ -604,17 +683,17 @@ func JoinChat(c *fiber.Ctx) error {
 	}
 
 	var chat Chat
-	tx = DB.Find(&chat, params.ChatID)
+	tx = db.Find(&chat, params.ChatID)
 	if tx.Error != nil {
 		return errors.Wrap(tx.Error, "Find Chat by ID")
 	}
 
-	err = DB.Model(&chat).Association("Members").Append(&user)
+	err = db.Model(&chat).Association("Members").Append(&user)
 	if err != nil {
 		return errors.Wrap(err, "Chat appends member")
 	}
 
-	err = DB.Save(&user).Error
+	err = db.Save(&user).Error
 	if err != nil {
 		return errors.Wrap(err, "Save Chat after Members Update")
 	}

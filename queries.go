@@ -1,8 +1,10 @@
 package main
 
-func getChatUsersExcept(chatID, skipUserID uint) ([]uint, error) {
+import "gorm.io/gorm"
+
+func getChatUsersExcept(db *gorm.DB, chatID, skipUserID uint) ([]uint, error) {
 	var users []User
-	tx := DB.Joins("JOIN chat_members ON users.id = chat_members.user_id").
+	tx := db.Joins("JOIN chat_members ON users.id = chat_members.user_id").
 		Where("users.id <> ?", skipUserID).
 		Where("chat_members.chat_id = ?", chatID).
 		Find(&users)

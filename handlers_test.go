@@ -38,7 +38,7 @@ func testStatus200(t *testing.T, app *fiber.App, url, method string) []byte {
 }
 
 func TestGetUsers(t *testing.T) {
-	teardownTest, app := setupTest(t)
+	app, DB, teardownTest := setupTest(t)
 	defer teardownTest()
 
 	users, err := addRandomUsers(DB, 10)
@@ -61,7 +61,7 @@ func TestGetUsers(t *testing.T) {
 }
 
 func TestUploadUserAvatar(t *testing.T) {
-	teardownTest, app := setupTest(t)
+	app, DB, teardownTest := setupTest(t)
 	defer teardownTest()
 
 	user, err := addRandomUser(DB, false)
@@ -104,7 +104,7 @@ func TestUploadUserAvatar(t *testing.T) {
 }
 
 func TestChatsView(t *testing.T) {
-	teardownTest, app := setupTest(t)
+	app, DB, teardownTest := setupTest(t)
 	defer teardownTest()
 
 	users, err := addRandomUsers(DB, 10)
@@ -124,7 +124,7 @@ func TestChatsView(t *testing.T) {
 }
 
 func TestGetChatView(t *testing.T) {
-	teardownTest, app := setupTest(t)
+	app, DB, teardownTest := setupTest(t)
 	defer teardownTest()
 
 	users, err := addRandomUsers(DB, 10)
@@ -147,7 +147,7 @@ func TestGetChatView(t *testing.T) {
 }
 
 func TestGetChatViewWithoutWholeApp(t *testing.T) {
-	teardownTest, app := setupTest(t)
+	app, DB, teardownTest := setupTest(t)
 	defer teardownTest()
 
 	users, err := addRandomUsers(DB, 10)
@@ -183,7 +183,7 @@ func TestGetChatViewWithoutWholeApp(t *testing.T) {
 }
 
 func TestJoinChat(t *testing.T) {
-	teardownTest, app := setupTest(t)
+	app, DB, teardownTest := setupTest(t)
 	defer teardownTest()
 
 	user, err := addRandomUser(DB, false)
@@ -228,7 +228,7 @@ func TestJoinChat(t *testing.T) {
 func TestSendMessageToWebsocket(t *testing.T) {
 	t.Skip("websockets are not implemented")
 
-	teardownTest, app := setupTest(t)
+	app, DB, teardownTest := setupTest(t)
 	defer teardownTest()
 
 	users, err := addRandomUsers(DB, 10)
@@ -403,7 +403,7 @@ func TestHandler(t *testing.T) {
 }
 
 func TestPostLoginViewWithExistingUser(t *testing.T) {
-	teardownTest, app := setupTest(t)
+	app, DB, teardownTest := setupTest(t)
 	defer teardownTest()
 
 	user, err := addRandomUser(DB, false)
@@ -436,7 +436,7 @@ func TestPostLoginViewWithExistingUser(t *testing.T) {
 }
 
 func TestPostLoginViewWithNonExistingUser(t *testing.T) {
-	teardownTest, app := setupTest(t)
+	app, DB, teardownTest := setupTest(t)
 	defer teardownTest()
 
 	email := "test@test.com"
@@ -475,8 +475,11 @@ func TestPostLoginViewWithNonExistingUser(t *testing.T) {
 }
 
 func TestRenderUsers(t *testing.T) {
-	teardownTest, app := setupTest(t)
+	app, db, teardownTest := setupTest(t)
 	defer teardownTest()
+
+	users, err := addRandomUsers(db, 10)
+	utils.AssertEqual(t, nil, err)
 
 	req := httptest.NewRequest(fiber.MethodGet, "/ui/users", nil)
 	resp, err := app.Test(req)
@@ -486,17 +489,22 @@ func TestRenderUsers(t *testing.T) {
 		utils.AssertEqual(t, nil, err)
 		t.Errorf("Status code=%d, body=%v\n", resp.StatusCode, string(b))
 	}
+
+	b, err := io.ReadAll(resp.Body)
+	utils.AssertEqual(t, nil, err)
+	html := string(b)
+	utils.AssertEqual(t, len(users), strings.Count(html, "user-row"))
 }
 
 func TestUserChatsView(t *testing.T) {
-	teardownTest, app := setupTest(t)
+	app, db, teardownTest := setupTest(t)
 	defer teardownTest()
 
-	user, err := addRandomUser(DB, false)
+	user, err := addRandomUser(db, false)
 	utils.AssertEqual(t, nil, err)
 
 	chatsCount := 9
-	_, err = addRandomChatsForUser(*user, chatsCount)
+	_, err = addRandomChatsForUser(db, *user, chatsCount)
 	utils.AssertEqual(t, nil, err)
 
 	userID := user.ID
@@ -517,13 +525,13 @@ func TestUserChatsView(t *testing.T) {
 }
 
 func TestUserView(t *testing.T) {
-	teardownTest, app := setupTest(t)
+	app, db, teardownTest := setupTest(t)
 	defer teardownTest()
 
-	user, err := addRandomUser(DB, false)
+	user, err := addRandomUser(db, false)
 	utils.AssertEqual(t, nil, err)
 
-	chats, err := addRandomChatsForUser(*user, 5)
+	chats, err := addRandomChatsForUser(db, *user, 5)
 	utils.AssertEqual(t, nil, err)
 
 	userID := user.ID
@@ -542,7 +550,7 @@ func TestUserView(t *testing.T) {
 }
 
 func TestHomeView(t *testing.T) {
-	teardownTest, app := setupTest(t)
+	app, _, teardownTest := setupTest(t)
 	defer teardownTest()
 
 	resp, err := app.Test(httptest.NewRequest(fiber.MethodGet, "/ui", nil))
@@ -551,7 +559,7 @@ func TestHomeView(t *testing.T) {
 }
 
 func TestRootHandler(t *testing.T) {
-	teardownTest, app := setupTest(t)
+	app, _, teardownTest := setupTest(t)
 	defer teardownTest()
 
 	resp, err := app.Test(httptest.NewRequest(fiber.MethodGet, "/", nil))
@@ -560,13 +568,13 @@ func TestRootHandler(t *testing.T) {
 }
 
 func TestGetUser(t *testing.T) {
-	teardownTest, app := setupTest(t)
+	app, db, teardownTest := setupTest(t)
 	defer teardownTest()
 
-	user, err := addRandomUser(DB, false)
+	user, err := addRandomUser(db, false)
 	utils.AssertEqual(t, nil, err)
 
-	chats, err := addRandomChatsForUser(*user, 5)
+	chats, err := addRandomChatsForUser(db, *user, 5)
 	utils.AssertEqual(t, nil, err)
 
 	userID := user.ID
@@ -590,7 +598,7 @@ func TestGetUser(t *testing.T) {
 }
 
 func TestCreateUser(t *testing.T) {
-	teardownTest, app := setupTest(t)
+	app, _, teardownTest := setupTest(t)
 	defer teardownTest()
 
 	userToCreate := User{
@@ -621,7 +629,7 @@ func TestCreateUser(t *testing.T) {
 }
 
 func TestGetChat(t *testing.T) {
-	teardownTest, app := setupTest(t)
+	app, DB, teardownTest := setupTest(t)
 	defer teardownTest()
 
 	_, err := addRandomUsers(DB, 20)

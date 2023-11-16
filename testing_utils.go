@@ -18,9 +18,8 @@ import (
 )
 
 // setupTest sets up fiber's App and DB
-func setupTest(t *testing.T) (func(), *fiber.App) {
-	var clearDB func(*gorm.DB) error
-	DB, clearDB = prepareTestDb(t)
+func setupTest(t *testing.T) (*fiber.App, *gorm.DB, func()) {
+	db, clearDB := prepareTestDb(t)
 
 	// TODO: load config from file
 
@@ -33,12 +32,12 @@ func setupTest(t *testing.T) (func(), *fiber.App) {
 		Database: 5,
 	})
 
-	app := createApp(DB, redisDB)
+	app := createApp(db, redisDB)
 
-	return func() {
+	return app, db, func() {
 		// TODO: errors in this func should not affect next functions. how to do that?
 
-		err := clearDB(DB)
+		err := clearDB(db)
 		if err != nil {
 			t.Error(err)
 		}
@@ -47,8 +46,7 @@ func setupTest(t *testing.T) (func(), *fiber.App) {
 		if err != nil {
 			t.Error(err)
 		}
-
-	}, app
+	}
 }
 
 func clearDB(db *gorm.DB) error {
@@ -63,14 +61,14 @@ func clearDB(db *gorm.DB) error {
 }
 
 func prepareTestDb(t *testing.T) (*gorm.DB, func(*gorm.DB) error) {
-	DB = connectDatabase("chatapp_test")
+	db := connectDatabase("chatapp_test")
 
-	err := clearDB(DB)
+	err := clearDB(db)
 	if err != nil {
 		log.Printf("dropdb failed %v\n", err)
 	}
 
-	return DB, clearDB
+	return db, clearDB
 }
 
 func CreateDBCommand() *exec.Cmd {

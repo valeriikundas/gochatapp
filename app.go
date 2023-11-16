@@ -6,11 +6,7 @@ import (
 	"os"
 
 	"github.com/gofiber/storage/redis/v3"
-	"gorm.io/gorm"
 )
-
-// TODO: remove these global variables
-var DB *gorm.DB
 
 func main() {
 	shouldGenerateChats := flag.Bool("generateChats", false, "Should generate chats?")
@@ -24,10 +20,10 @@ func main() {
 		}
 	}
 
-	DB = connectDatabase("chatapp")
+	pgDB := connectDatabase("chatapp")
 
 	if *shouldGenerateChats {
-		err := generateRandomChats(nil, DB)
+		err := generateRandomChats(nil, pgDB)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -41,6 +37,6 @@ func main() {
 		Database: 0,
 	})
 
-	app := createApp(DB, redisDB)
+	app := createApp(pgDB, redisDB)
 	log.Fatal(app.Listen("0.0.0.0:3000"))
 }

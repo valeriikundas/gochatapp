@@ -36,7 +36,7 @@ func connectDatabase(dbName string) *gorm.DB {
 	return db
 }
 
-func createApp(db *gorm.DB, redisDB *redis.Storage) *fiber.App {
+func createApp(pgDB *gorm.DB, redisDB *redis.Storage) *fiber.App {
 	setupLogger()
 
 	htmlEngine := html.New("templates/", ".html")
@@ -69,6 +69,8 @@ func createApp(db *gorm.DB, redisDB *redis.Storage) *fiber.App {
 			Storage: redisDB,
 		})
 		c.Locals("store", store)
+
+		c.Locals("db", pgDB)
 
 		return c.Next()
 	})

@@ -124,7 +124,7 @@ func addRandomChatWithUsers(db *gorm.DB) (*Chat, error) {
 func generateRandomChats(t *testing.T, db *gorm.DB) error {
 	// TODO: refactor to focused functions
 
-	users, err := addRandomUsers(DB, 100)
+	users, err := addRandomUsers(db, 100)
 	utils.AssertEqual(t, nil, err)
 
 	k := 100
@@ -183,7 +183,7 @@ func selectRandomUsers(users []User, cnt int) []User {
 	return selectedUsers
 }
 
-func addRandomChatsForUser(user User, n int) ([]Chat, error) {
+func addRandomChatsForUser(db *gorm.DB, user User, n int) ([]Chat, error) {
 	chats := make([]Chat, n)
 	for i := 0; i < n; i += 1 {
 		chats[i] = Chat{
@@ -192,7 +192,7 @@ func addRandomChatsForUser(user User, n int) ([]Chat, error) {
 		}
 	}
 
-	tx := DB.Create(&chats)
+	tx := db.Create(&chats)
 	if tx.Error != nil {
 		return nil, tx.Error
 	}

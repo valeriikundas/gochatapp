@@ -6,6 +6,7 @@ import (
 
 	"github.com/gofiber/contrib/websocket"
 	"github.com/gofiber/fiber/v2/log"
+	"gorm.io/gorm"
 )
 
 // userID to websocket connection
@@ -38,6 +39,11 @@ type BroadcastMessageSchema struct {
 }
 
 func WebsocketHandler(c *websocket.Conn) {
+	db, ok := c.Locals("db").(*gorm.DB)
+	if !ok {
+		log.Fatal("error getting `db` from c.Locals()")
+	}
+
 	for {
 		messageType, message, err := c.ReadMessage()
 		if err != nil {
@@ -58,7 +64,7 @@ func WebsocketHandler(c *websocket.Conn) {
 
 		case "send_message":
 			// get users that are in chat and not userID
-			handleSendMessage(message)
+			handleSendMessage(db, message)
 
 		default:
 			log.Errorf("unhandled message type=%s v=%s\n", messageType, v)
@@ -66,7 +72,7 @@ func WebsocketHandler(c *websocket.Conn) {
 	}
 }
 
-func handleSendMessage(message []byte) {
+func handleSendMessage(db *gorm.DB, message []byte) {
 	var requestData SendMessageRequestSchema
 	err := json.Unmarshal(message, &requestData)
 	if err != nil {
@@ -81,23 +87,23 @@ func handleSendMessage(message []byte) {
 		FromID:  requestData.UserID,
 		Content: messageContent,
 	}
-	tx := DB.Create(&messageObj)
+	tx := db.Create(&messageObj)
 	if tx.Error != nil {
 		log.Fatal(tx.Error)
 	}
 
-	userIDsToSendMessageTo, err := getChatUsersExcept(requestData.ChatID, requestData.UserID)
+	userIDsToSendMessageTo, err := getChatUsersExcept(db, requestData.ChatID, requestData.UserID)
 	if err != nil {
 		log.Fatalf("getChatUsersExcept err=%s\n", err)
 	}
 	log.Debugf("will send message to userIDsToSendMessageTo=%+v\n", userIDsToSendMessageTo)
 
 	for _, userID := range userIDsToSendMessageTo {
-		sendMessageToUser(userID, messageContent)
+		sendMessageToUser(db, userID, messageContent)
 	}
 }
 
-func sendMessageToUser(userID uint, messageContent string) {
+func sendMessageToUser(db *gorm.DB, userID uint, messageContent string) {
 	memberConn := websocketConnections[userID]
 
 	if memberConn == nil {
@@ -112,7 +118,7 @@ func sendMessageToUser(userID uint, messageContent string) {
 	}
 
 	var fromUser User
-	err = DB.Find(&fromUser, userID).Error
+	err = db.Find(&fromUser, userID).Error
 	if err != nil {
 		log.Fatalf("get user by id failed id=%d\n", userID)
 	}
