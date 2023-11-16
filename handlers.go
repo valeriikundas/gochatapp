@@ -7,6 +7,7 @@ import (
 
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/session"
 	"github.com/pkg/errors"
 	"gorm.io/gorm"
 )
@@ -223,6 +224,11 @@ func Login(c *fiber.Ctx) error {
 		return errors.Wrap(err, "BodyParser")
 	}
 
+	store, ok := c.Locals("store").(*session.Store)
+	if !ok {
+		log.Fatalf("error getting `store` from c.Locals()")
+	}
+
 	session, err := store.Get(c)
 	if err != nil {
 		return err
@@ -312,7 +318,7 @@ func CreateUser(c *fiber.Ctx) error {
 
 	validate, ok := c.Locals("validate").(*validator.Validate)
 	if !ok {
-		panic("casting *validator.Validate from c.Locals() failed")
+		log.Fatalf("error getting `validate` from c.Locals()")
 	}
 
 	err = validate.Struct(user)
@@ -409,7 +415,7 @@ func SendMessage(c *fiber.Ctx) error {
 
 	validate, ok := c.Locals("validate").(*validator.Validate)
 	if !ok {
-		panic("casting *validator.Validate from c.Locals() failed")
+		log.Fatalf("error getting `validate` from c.Locals()")
 	}
 
 	err = validate.Struct(data)
@@ -464,6 +470,11 @@ func PostLoginView(c *fiber.Ctx) error {
 	err := c.BodyParser(&data)
 	if err != nil {
 		return err
+	}
+
+	store, ok := c.Locals("store").(*session.Store)
+	if !ok {
+		log.Fatalf("error getting `store` from c.Locals()")
 	}
 
 	session, err := store.Get(c)

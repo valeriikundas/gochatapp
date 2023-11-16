@@ -38,6 +38,7 @@ require (
 	github.com/go-playground/universal-translator v0.18.1 // indirect
 	github.com/go-playground/validator/v10 v10.16.0
 	github.com/gofiber/fiber/v2 v2.50.0
+	github.com/gofiber/storage/redis v1.3.4
 	github.com/gofiber/template/html/v2 v2.0.5
 	github.com/gorilla/websocket v1.5.1
 	github.com/jackc/pgpassfile v1.0.0 // indirect

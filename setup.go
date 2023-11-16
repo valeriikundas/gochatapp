@@ -10,6 +10,8 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/log"
 	"github.com/gofiber/fiber/v2/middleware/logger"
+	"github.com/gofiber/fiber/v2/middleware/session"
+	"github.com/gofiber/storage/redis"
 	"github.com/gofiber/template/html/v2"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -37,8 +39,6 @@ func connectDatabase(dbName string) *gorm.DB {
 func createApp(db *gorm.DB) *fiber.App {
 	setupLogger()
 
-	validate := validator.New()
-
 	htmlEngine := html.New("templates/", ".html")
 
 	// TODO: will use django engine for new templates likely
@@ -61,7 +61,22 @@ func createApp(db *gorm.DB) *fiber.App {
 	app.Use("/ws", AssertWebSocketUpgradeMiddleware)
 
 	app.Use(func(c *fiber.Ctx) error {
+		validate := validator.New()
 		c.Locals("validate", validate)
+
+		// TODO: setup test redis
+
+		var redisStorage = redis.New(redis.Config{
+			Host:     "0.0.0.0",
+			Port:     6379,
+			Username: "valeriikundas",
+		})
+		// TODO: rename to `sessionStore` soon
+		var store = session.New(session.Config{
+			Storage: redisStorage,
+		})
+		c.Locals("store", store)
+
 		return c.Next()
 	})
 
