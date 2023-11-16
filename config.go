@@ -7,22 +7,22 @@ import (
 	"github.com/spf13/viper"
 )
 
-type Configuration struct {
+type Config struct {
 	*viper.Viper
 }
 
-func NewConfig(configName string) *Configuration {
-	configuration := &Configuration{
+func NewConfig(configName string) *Config {
+	config := &Config{
 		Viper: viper.New(),
 	}
 
-	configuration.AddConfigPath(".")
-	configuration.SetConfigName(configName)
-	configuration.SetConfigType("yaml")
+	config.AddConfigPath(".")
+	config.SetConfigName(configName)
+	config.SetConfigType("yaml")
 
-	configuration.AutomaticEnv()
+	config.AutomaticEnv()
 
-	err := configuration.ReadInConfig()
+	err := config.ReadInConfig()
 	if err != nil {
 		_, ok := err.(viper.ConfigFileNotFoundError)
 		if ok {
@@ -32,5 +32,5 @@ func NewConfig(configName string) *Configuration {
 		}
 	}
 
-	return configuration
+	return config
 }

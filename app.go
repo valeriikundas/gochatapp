@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"log"
 	"os"
 )
@@ -33,5 +34,16 @@ func main() {
 	redisDB := getRedis(config)
 
 	app := createApp(postgresDB, redisDB)
-	log.Fatal(app.Listen("0.0.0.0:3000"))
+
+	appUrl := getAppURL(config)
+	log.Fatal(app.Listen(appUrl))
+
+}
+
+func getAppURL(config *Config) string {
+	appHost := config.GetString("app_host")
+	appPort := config.GetInt("app_port")
+
+	appUrl := fmt.Sprintf("%s:%d", appHost, appPort)
+	return appUrl
 }

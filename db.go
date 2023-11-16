@@ -5,7 +5,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func getPostgres(config *Configuration) *gorm.DB {
+func getPostgres(config *Config) *gorm.DB {
 	postgresHost := config.GetString("postgres_host")
 	postgresPort := config.GetInt("postgres_port")
 	postgresDBName := config.GetString("postgres_dbname")
@@ -21,7 +21,7 @@ func getPostgres(config *Configuration) *gorm.DB {
 	return postgresDB
 }
 
-func getRedis(config *Configuration) *redis.Storage {
+func getRedis(config *Config) *redis.Storage {
 	redisHost := config.GetString("redis_host")
 	redisPort := config.GetInt("redis_port")
 	redisUsername := config.GetString("redis_username")

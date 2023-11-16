@@ -53,7 +53,7 @@ func clearDB(db *gorm.DB) error {
 	return nil
 }
 
-func prepareTestDb(t *testing.T, config *Configuration) (*gorm.DB, func(*gorm.DB) error) {
+func prepareTestDb(t *testing.T, config *Config) (*gorm.DB, func(*gorm.DB) error) {
 	db := getPostgres(config)
 
 	err := clearDB(db)
