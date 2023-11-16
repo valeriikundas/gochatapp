@@ -22,17 +22,13 @@ type GlobalErrorHandlerResponse struct {
 	Message string `json:"message"`
 }
 
-func connectDatabase(dbName string) *gorm.DB {
-	dsn := fmt.Sprintf("host=%s port=%d dbname=%s sslmode=disable TimeZone=Europe/Kiev", "0.0.0.0", 5432, dbName)
+func connectDatabase(postgresHost string, postgresPort int, dbName string) *gorm.DB {
+	dsn := fmt.Sprintf("host=%s port=%d dbname=%s sslmode=disable TimeZone=Europe/Kiev", postgresHost, postgresPort, dbName)
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
 		panic(err)
 	}
 
-	err = db.AutoMigrate(&User{}, &Chat{}, &Message{})
-	if err != nil {
-		panic(err)
-	}
 	return db
 }
 

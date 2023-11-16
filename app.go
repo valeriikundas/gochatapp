@@ -4,11 +4,11 @@ import (
 	"flag"
 	"log"
 	"os"
-
-	"github.com/gofiber/storage/redis/v3"
 )
 
 func main() {
+	config := NewConfig("dev_config")
+
 	shouldGenerateChats := flag.Bool("generateChats", false, "Should generate chats?")
 	flag.Parse()
 
@@ -20,23 +20,18 @@ func main() {
 		}
 	}
 
-	pgDB := connectDatabase("chatapp")
+	postgresDB := getPostgres(config)
 
 	if *shouldGenerateChats {
-		err := generateRandomChats(nil, pgDB)
+		err := generateRandomChats(nil, postgresDB)
 		if err != nil {
 			log.Fatal(err)
 		}
 		return
 	}
 
-	redisDB := redis.New(redis.Config{
-		Host:     "0.0.0.0",
-		Port:     6379,
-		Username: "valeriikundas",
-		Database: 0,
-	})
+	redisDB := getRedis(config)
 
-	app := createApp(pgDB, redisDB)
+	app := createApp(postgresDB, redisDB)
 	log.Fatal(app.Listen("0.0.0.0:3000"))
 }

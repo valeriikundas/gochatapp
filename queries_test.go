@@ -10,7 +10,9 @@ import (
 func Test_getChatUsersExcept(t *testing.T) {
 	t.Skip("currently uses real db")
 
-	db := connectDatabase("chatapp")
+	config := NewConfig("test_config")
+
+	db := getPostgres(config)
 
 	chat, err := addRandomChatWithUsers(db)
 	utils.AssertEqual(t, nil, err)

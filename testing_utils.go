@@ -13,24 +13,17 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/utils"
-	"github.com/gofiber/storage/redis/v3"
 	"gorm.io/gorm"
 )
 
 // setupTest sets up fiber's App and DB
 func setupTest(t *testing.T) (*fiber.App, *gorm.DB, func()) {
-	db, clearDB := prepareTestDb(t)
-
-	// TODO: load config from file
+	config := NewConfig("test_config")
+	db, clearDB := prepareTestDb(t, config)
 
 	// TODO: write test for session store
 
-	redisDB := redis.New(redis.Config{
-		Host:     "0.0.0.0",
-		Port:     6379,
-		Username: "valeriikundas",
-		Database: 5,
-	})
+	redisDB := getRedis(config)
 
 	app := createApp(db, redisDB)
 
@@ -60,8 +53,8 @@ func clearDB(db *gorm.DB) error {
 	return nil
 }
 
-func prepareTestDb(t *testing.T) (*gorm.DB, func(*gorm.DB) error) {
-	db := connectDatabase("chatapp_test")
+func prepareTestDb(t *testing.T, config *Configuration) (*gorm.DB, func(*gorm.DB) error) {
+	db := getPostgres(config)
 
 	err := clearDB(db)
 	if err != nil {

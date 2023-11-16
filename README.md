@@ -17,6 +17,7 @@
 - [ ] read about golang project structure and set it up (cmd/,pkg/,internal/ etc)
 - [ ] in general writing a chat app
 - [ ] read through Effective go https://go.dev/doc/effective_go#semicolons
+- [ ] adhere to https://12factor.net/
 - [ ] write a signup in tdd fashion
 - [ ] use tdd, coverage to >90%
   - [ ] https://medium.com/@engmiladkh1372/test-suite-for-unit-testing-gorm-in-go-47b6ea8d4ab0
