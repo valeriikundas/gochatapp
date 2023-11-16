@@ -485,37 +485,16 @@ func SendMessage(c *fiber.Ctx) error {
 
 	err = validate.Struct(data)
 	if err != nil {
-		var errors []FieldError
-		for _, err := range err.(validator.ValidationErrors) {
-			el := FieldError{
-				Field: err.Field(),
-				Tag:   err.Tag(),
-				Param: err.Param(),
-			}
-			errors = append(errors, el)
-		}
-		return c.Status(fiber.StatusBadRequest).JSON(errors)
+		return handleValidationError(c, err)
 	}
 
-	userEmail := sessionCurrentUser.Email
-	var user User
-	tx := db.Where("Email = ?", userEmail).First(&user)
-	if tx.Error != nil {
-		return tx.Error
-	}
-
-	message := Message{
-		ChatID:  uint(params.ChatID),
-		FromID:  user.ID,
-		Content: data.Content,
-	}
-	tx = db.Create(&message)
-	if tx.Error != nil {
-		return errors.Wrap(tx.Error, "db create message failed")
+	messageID, err := saveMessage(db, sessionCurrentUser.Email, uint(params.ChatID), data.Content)
+	if err != nil {
+		return err
 	}
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
-		"ID": message.ID,
+		"ID": messageID,
 	})
 }
 
