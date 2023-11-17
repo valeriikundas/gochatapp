@@ -27,6 +27,8 @@ func setupTest(t *testing.T) (*fiber.App, *gorm.DB, func()) {
 
 	app := createApp(db, redisDB)
 
+	// TODO: teardown func that is returned should be called using t.Cleanup(teardownTest). it's better than `defer`
+
 	return app, db, func() {
 		// TODO: errors in this func should not affect next functions. how to do that?
 

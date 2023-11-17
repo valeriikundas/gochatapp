@@ -72,3 +72,4 @@
 - [ ] deploy some ML model using Go
 - [ ] try htmx
 - [ ] write a few tests using mocks with https://pkg.go.dev/github.com/stretchr/testify/mock
+- [ ] use git worktrees
