@@ -9,8 +9,9 @@
 - [ ] deploy to aws
   - [ ] using terraform
   - [ ] using cloudformation?
+    - [ ] https://github.com/localstack/localstack
   - [ ] fly.io ?
-  - [ ] encore.dev ?
+  - [ ] https://github.com/klothoplatform/klotho
 - [ ] use fiber auth middleware https://docs.gofiber.io/api/middleware/basicauth
 - [ ] add auth https://medium.com/@abhinavv.singh/a-comprehensive-guide-to-authentication-and-authorization-in-go-golang-6f783b4cea18
 - [ ] use JWT tokens
@@ -76,3 +77,6 @@
 - [ ] use features of postgres - full text search, indexing, explain, read about server administration, hstore, pg_cron
 - [ ] how to work with timezones?
 - [ ] setup localization
+- [ ] deploy to url
+- [ ] created dev and prod environments on aws under different accounts
+  - [ ] https://docs.sst.dev/setting-up-aws#create-dev-and-prod-accounts
