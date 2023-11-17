@@ -2,8 +2,8 @@ package main
 
 import (
 	"fmt"
+	"log/slog"
 
-	"github.com/gofiber/fiber/v2/log"
 	"github.com/spf13/viper"
 )
 
@@ -16,9 +16,12 @@ func NewConfig(configName string) *Config {
 		Viper: viper.New(),
 	}
 
-	config.AddConfigPath(".")
-	config.SetConfigName(configName)
-	config.SetConfigType("yaml")
+	if configName != "prod_config" {
+		config.AddConfigPath(".")
+		config.SetConfigName(configName)
+		config.SetConfigType("yaml")
+
+	}
 
 	config.AutomaticEnv()
 
@@ -26,9 +29,11 @@ func NewConfig(configName string) *Config {
 	if err != nil {
 		_, ok := err.(viper.ConfigFileNotFoundError)
 		if ok {
-			log.Debugf("fatal error config file not found: %w", err)
+			if configName != "prod_config" {
+				slog.Info("config file not found", "configName", configName, "err", err)
+			}
 		} else {
-			panic(fmt.Errorf("fatal error config file: %w", err))
+			panic(fmt.Errorf("fatal error: reading config file: %w", err))
 		}
 	}
 

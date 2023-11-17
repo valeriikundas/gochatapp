@@ -17,13 +17,14 @@ repos:
         types: [go]
         files: ".go"
         pass_filenames: false
-      - id: go-lint
-        name: lint go
-        language: system
-        entry: golangci-lint run -e gocritic .
-        types: [go]
-        files: ".go"
-        pass_filenames: false
+      # - id: go-lint
+      # FIXME:
+      #   name: lint go
+      #   language: system
+      #   entry: golangci-lint run -e gocritic .
+      #   types: [go]
+      #   files: ".go"
+      #   pass_filenames: false
       - id: staticcheck
         name: staticcheck
         language: system

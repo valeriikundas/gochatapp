@@ -16,7 +16,7 @@
 - [ ] add auth https://medium.com/@abhinavv.singh/a-comprehensive-guide-to-authentication-and-authorization-in-go-golang-6f783b4cea18
 - [ ] use JWT tokens
 - [ ] read about golang project structure and set it up (cmd/,pkg/,internal/ etc)
-- [ ] in general writing a chat app
+- [x] in general writing a chat app
 - [ ] read through Effective go https://go.dev/doc/effective_go#semicolons
 - [ ] adhere to https://12factor.net/
 - [ ] write a signup in tdd fashion

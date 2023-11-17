@@ -1,18 +1,29 @@
 package main
 
 import (
+	"log/slog"
+	"os"
+
 	"github.com/gofiber/storage/redis/v3"
 	"gorm.io/gorm"
 )
 
-func getPostgres(config *Config) *gorm.DB {
-	postgresHost := config.GetString("postgres_host")
-	postgresPort := config.GetInt("postgres_port")
-	postgresUser := config.GetString("postgres_user")
-	postgresPassword := config.GetString("postgres_password")
-	postgresDBName := config.GetString("postgres_dbname")
+// FIXME: pass connection url as argument to both postgres&redis functions
 
-	postgresDB := connectDatabase(postgresHost, postgresPort, postgresUser, postgresPassword, postgresDBName)
+func getPostgres(config *Config) *gorm.DB {
+	var dsn string
+
+	if config.ConfigFileUsed() == "prod_config" {
+		dsn = os.Getenv("DATABASE_URL")
+		slog.Info("postgres: using prod_config", "dsn", dsn, "config", config.ConfigFileUsed())
+		slog.Info("postgres: using prod_config", "dsn", dsn, "config", config.ConfigFileUsed())
+	} else {
+		dsn = config.GetString("DATABASE_URL")
+		slog.Info("postgres: using non-prod config", "config", config.ConfigFileUsed(), "dsn", dsn)
+		slog.Info("postgres: using non-prod config", "config", config.ConfigFileUsed(), "dsn", dsn)
+	}
+	slog.Info("connect postgres", "url", dsn, "config", config.ConfigFileUsed())
+	postgresDB := connectDatabase(dsn)
 
 	// TODO: get a list of tables from somewhere
 	err := postgresDB.AutoMigrate(&User{}, &Chat{}, &Message{})
@@ -24,17 +35,21 @@ func getPostgres(config *Config) *gorm.DB {
 }
 
 func getRedis(config *Config) *redis.Storage {
-	redisHost := config.GetString("redis_host")
-	redisPort := config.GetInt("redis_port")
-	redisUsername := config.GetString("redis_username")
-	redisDatabase := config.GetInt("redis_database")
+	var redisURL string
+
+	if config.ConfigFileUsed() == "prod_config" {
+		redisURL = os.Getenv("REDIS_URL")
+		slog.Info("redis: using prod_config", "redisURL", redisURL)
+		slog.Info("redis: using prod_config", "redisURL", redisURL, "config", config.ConfigFileUsed())
+	} else {
+		redisURL = config.GetString("REDIS_URL")
+		slog.Info("redis: using non-prod config", "redisURL", redisURL)
+		slog.Info("redis: using non-prod config", "redisURL", redisURL, "config", config.ConfigFileUsed())
+
+	}
 
 	redisDB := redis.New(redis.Config{
-		Host:     redisHost,
-		Port:     redisPort,
-		Username: redisUsername,
-		Database: redisDatabase,
+		URL: redisURL,
 	})
-
 	return redisDB
 }

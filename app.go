@@ -3,15 +3,24 @@ package main
 import (
 	"flag"
 	"fmt"
-	"log"
+	"log/slog"
+
 	"os"
+
+	"github.com/gofiber/fiber/v2/log"
 )
 
 func main() {
-	envOptions := []string{"dev", "docker", "test"}
-	env := flag.String("config", "dev", fmt.Sprintf("What config to use. Options are %v", envOptions))
+	// FIXME: write test for `main` function
+	// FIXME: make it enum
+	envOptions := []string{"dev", "docker", "test", "prod"}
+	env := flag.String("config", "prod", fmt.Sprintf("What config to use. Options are %v", envOptions))
+	shouldGenerateChats := flag.Bool("generateChats", false, "Should generate chats?")
+	flag.Parse()
+
+	slog.Info("initial read env", "env", env)
 	if env == nil {
-		*env = "dev"
+		*env = "prod"
 	}
 	if !contains(envOptions, env) {
 		panic(fmt.Errorf("unknown env: %v", env))
@@ -21,9 +30,6 @@ func main() {
 	if config == nil {
 		panic(fmt.Errorf("failed reading config for env=%s", *env))
 	}
-
-	shouldGenerateChats := flag.Bool("generateChats", false, "Should generate chats?")
-	flag.Parse()
 
 	_, err := os.Stat("uploads/")
 	if os.IsNotExist(err) {
@@ -62,9 +68,5 @@ func contains(envOptions []string, env *string) bool {
 }
 
 func getAppURL(config *Config) string {
-	appHost := config.GetString("app_host")
-	appPort := config.GetInt("app_port")
-
-	appUrl := fmt.Sprintf("%s:%d", appHost, appPort)
-	return appUrl
+	return "0.0.0.0:3000"
 }

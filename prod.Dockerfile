@@ -2,11 +2,13 @@ FROM golang:1.21 AS build-stage
 WORKDIR /app
 COPY go.mod go.sum ./
 RUN go mod download
-COPY *.go dev_config.yaml templates/ ./
-RUN CGO_ENABLED=0 GOOS=linux go build -o /api
+COPY *.go ./
+COPY templates/ ./templates
+RUN CGO_ENABLED=0 GOOS=linux go build -o /dist/app
 
 FROM build-stage AS run-stage
-WORKDIR /
-COPY --from=build-stage /api /app/dev_config.yaml /api
+WORKDIR /dist
+COPY --from=build-stage /dist/app ./
+COPY --from=build-stage /app/templates/ ./templates/
 EXPOSE 3000
-CMD ["/api"]
+CMD ["/dist/app"]

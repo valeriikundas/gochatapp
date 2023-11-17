@@ -47,10 +47,10 @@ func WebsocketHandler(c *websocket.Conn) {
 	for {
 		messageType, message, err := c.ReadMessage()
 		if err != nil {
-			log.Debugf("read error:", err)
+			log.Infof("read error:", err)
 			break
 		}
-		log.Debugf("recv: %d %+v", messageType, string(message))
+		log.Infof("recv: %d %+v", messageType, string(message))
 
 		var v BaseMessageSchema
 		err = json.Unmarshal(message, &v)
@@ -78,10 +78,10 @@ func handleSendMessage(db *gorm.DB, message []byte) {
 	if err != nil {
 		log.Fatalf("json unmarshall SendMessageRequestSchema error: %s\n", err)
 	}
-	log.Debugf("`send message` message=%+v\n", requestData)
+	log.Infof("`send message` message=%+v\n", requestData)
 
 	messageContent := string(requestData.Message)
-	log.Debugf("messageContent=%s\n", messageContent)
+	log.Infof("messageContent=%s\n", messageContent)
 	messageObj := Message{
 		ChatID:  requestData.ChatID,
 		FromID:  requestData.UserID,
@@ -96,7 +96,7 @@ func handleSendMessage(db *gorm.DB, message []byte) {
 	if err != nil {
 		log.Fatalf("getChatUsersExcept err=%s\n", err)
 	}
-	log.Debugf("will send message to userIDsToSendMessageTo=%+v\n", userIDsToSendMessageTo)
+	log.Infof("will send message to userIDsToSendMessageTo=%+v\n", userIDsToSendMessageTo)
 
 	for _, userID := range userIDsToSendMessageTo {
 		sendMessageToUser(db, userID, messageContent)
@@ -107,7 +107,7 @@ func sendMessageToUser(db *gorm.DB, userID uint, messageContent string) {
 	memberConn := websocketConnections[userID]
 
 	if memberConn == nil {
-		log.Debugf("no connection for userID=%d\n", userID)
+		log.Infof("no connection for userID=%d\n", userID)
 		return
 	}
 
@@ -147,7 +147,7 @@ func handleJoinChat(c *websocket.Conn, message []byte) {
 	if err != nil {
 		log.Fatalf("json unmarshall JoinChatRequestSchema error: %s\n", err)
 	}
-	log.Debugf("`join chat` message=%+v\n", requestData)
+	log.Infof("`join chat` message=%+v\n", requestData)
 
 	userID := requestData.UserID
 	_, exists := websocketConnections[userID]

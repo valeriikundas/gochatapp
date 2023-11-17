@@ -1,13 +1,2 @@
-app_host: 0.0.0.0
-app_port: 3000
-
-postgres_host: postgres
-postgres_port: 5432
-postgres_dbname: chatapp_dev
-postgres_user: postgres
-postgres_password: super-secret-password
-
-redis_host: redis
-redis_port: 6379
-redis_username: valeriikundas
-redis_database: 0
+DATABASE_URL: postgres://postgres:super-secret-password@postgres:5432/chatapp_dev
+REDIS_URL: redis://valeriikundas@redis:6379/0
