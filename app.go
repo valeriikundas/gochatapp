@@ -8,7 +8,19 @@ import (
 )
 
 func main() {
-	config := NewConfig("dev_config")
+	envOptions := []string{"dev", "docker", "test"}
+	env := flag.String("config", "dev", fmt.Sprintf("What config to use. Options are %v", envOptions))
+	if env == nil {
+		*env = "dev"
+	}
+	if !contains(envOptions, env) {
+		panic(fmt.Errorf("unknown env: %v", env))
+	}
+
+	config := NewConfig(fmt.Sprintf("%s_config", *env))
+	if config == nil {
+		panic(fmt.Errorf("failed reading config for env=%s", *env))
+	}
 
 	shouldGenerateChats := flag.Bool("generateChats", false, "Should generate chats?")
 	flag.Parse()
@@ -38,6 +50,15 @@ func main() {
 	appUrl := getAppURL(config)
 	log.Fatal(app.Listen(appUrl))
 
+}
+
+func contains(envOptions []string, env *string) bool {
+	for _, v := range envOptions {
+		if v == *env {
+			return true
+		}
+	}
+	return false
 }
 
 func getAppURL(config *Config) string {

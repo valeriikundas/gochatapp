@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"net/url"
 	"os"
 
 	"github.com/go-playground/validator/v10"
@@ -22,11 +23,18 @@ type GlobalErrorHandlerResponse struct {
 	Message string `json:"message"`
 }
 
-func connectDatabase(postgresHost string, postgresPort int, postgresUser string, postgresPassword string, dbName string) *gorm.DB {
-	dsn := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable TimeZone=Europe/Kiev", postgresHost, postgresPort, postgresUser, postgresPassword, dbName)
-	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
+func connectDatabase(postgresHost string, postgresPort int, postgresUser string, postgresPassword string, postgresDatabase string) *gorm.DB {
+	dsn := url.URL{
+		Scheme:   "postgresql",
+		User:     url.UserPassword(postgresUser, postgresPassword),
+		Host:     fmt.Sprintf("%s:%d", postgresHost, postgresPort),
+		Path:     postgresDatabase,
+		RawQuery: (&url.Values{"sslmode": []string{"disable"}}).Encode(),
+	}
+
+	db, err := gorm.Open(postgres.Open(dsn.String()), &gorm.Config{})
 	if err != nil {
-		panic(fmt.Errorf("error connect to database: %w, dsn=%s", err, dsn))
+		panic(fmt.Errorf("error connect to database: %w, dsn=%s", err, dsn.String()))
 	}
 
 	return db
