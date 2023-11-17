@@ -21,3 +21,10 @@ redis-ui:
 
 redis-cli:
 	docker run --name redis-cli --rm -it goodsmileduck/redis-cli redis-cli -h host.docker.internal -p 6379
+
+test-docker:
+	docker-compose up -d redis postgres
+	docker-compose exec postgres dropdb --user postgres --if-exists chatapp_test
+	docker-compose exec postgres createdb --user postgres chatapp_test
+	make test
+	docker-compose down redis postgres

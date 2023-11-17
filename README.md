@@ -5,7 +5,7 @@
 - [x] move computer mouse to right side to challenge the brain :)
 - [x] implement chat functionality using websockets, no tests at first
 - [x] basic rendering tests for ui
-- [ ] setup docker-compose
+- [x] setup docker-compose
 - [ ] deploy to aws
   - [ ] using terraform
   - [ ] using cloudformation?
@@ -73,3 +73,6 @@
 - [ ] try htmx
 - [ ] write a few tests using mocks with https://pkg.go.dev/github.com/stretchr/testify/mock
 - [ ] use git worktrees
+- [ ] use features of postgres - full text search, indexing, explain, read about server administration, hstore, pg_cron
+- [ ] how to work with timezones?
+- [ ] setup localization

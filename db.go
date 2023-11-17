@@ -8,9 +8,11 @@ import (
 func getPostgres(config *Config) *gorm.DB {
 	postgresHost := config.GetString("postgres_host")
 	postgresPort := config.GetInt("postgres_port")
+	postgresUser := config.GetString("postgres_user")
+	postgresPassword := config.GetString("postgres_password")
 	postgresDBName := config.GetString("postgres_dbname")
 
-	postgresDB := connectDatabase(postgresHost, postgresPort, postgresDBName)
+	postgresDB := connectDatabase(postgresHost, postgresPort, postgresUser, postgresPassword, postgresDBName)
 
 	// TODO: get a list of tables from somewhere
 	err := postgresDB.AutoMigrate(&User{}, &Chat{}, &Message{})

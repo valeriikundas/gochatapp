@@ -1,0 +1,42 @@
+version: "3.8"
+services:
+  backend:
+    build: .
+    ports:
+      - "3000:3000"
+    volumes:
+      - ".:/app"
+    networks:
+      - network_db
+    depends_on:
+      - postgres
+      - redis
+
+  redis:
+    image: "redis"
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - network_db
+
+  postgres:
+    image: "postgres"
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=chatapp_dev
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=super-secret-password
+    networks:
+      - network_db
+
+networks:
+  network_db:
+
+volumes:
+  redis_data:
+  postgres_data:

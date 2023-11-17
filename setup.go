@@ -22,11 +22,11 @@ type GlobalErrorHandlerResponse struct {
 	Message string `json:"message"`
 }
 
-func connectDatabase(postgresHost string, postgresPort int, dbName string) *gorm.DB {
-	dsn := fmt.Sprintf("host=%s port=%d dbname=%s sslmode=disable TimeZone=Europe/Kiev", postgresHost, postgresPort, dbName)
+func connectDatabase(postgresHost string, postgresPort int, postgresUser string, postgresPassword string, dbName string) *gorm.DB {
+	dsn := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable TimeZone=Europe/Kiev", postgresHost, postgresPort, postgresUser, postgresPassword, dbName)
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
-		panic(err)
+		panic(fmt.Errorf("error connect to database: %w, dsn=%s", err, dsn))
 	}
 
 	return db

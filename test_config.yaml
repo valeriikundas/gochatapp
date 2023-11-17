@@ -1,6 +1,8 @@
 postgres_host: 0.0.0.0
 postgres_port: 5432
 postgres_dbname: chatapp_test
+postgres_user: postgres
+postgres_password: super-secret-password
 
 redis_host: 0.0.0.0
 redis_port: 6379
