@@ -1,9 +1,9 @@
 package main
 
 import (
-	"log"
 	"testing"
 
+	"github.com/gofiber/fiber/v2/log"
 	"github.com/gofiber/fiber/v2/utils"
 )
 
@@ -29,5 +29,5 @@ func Test_getChatUsersExcept(t *testing.T) {
 	userIDs, err := getChatUsersExcept(db, chatID, userID)
 	utils.AssertEqual(t, nil, err)
 
-	log.Println("ids=", userIDs)
+	log.Info("ids=", userIDs)
 }

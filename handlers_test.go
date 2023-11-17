@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
+
 	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
@@ -17,6 +17,7 @@ import (
 	"github.com/posener/wstest"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/log"
 	"github.com/gofiber/fiber/v2/middleware/adaptor"
 	"github.com/gofiber/fiber/v2/utils"
 	"github.com/gorilla/websocket"
@@ -271,7 +272,7 @@ func TestSendMessageToWebsocket(t *testing.T) {
 	// log.Printf("conn.LocalAddr()=%s", conn.LocalAddr())
 
 	url := "ws" + strings.TrimPrefix(testServer.URL, "http") + "/ws/5"
-	log.Printf("log url=%s\n", url)
+	log.Debugf("log url=%s\n", url)
 	conn, resp, err := websocket.DefaultDialer.Dial(url, nil)
 	utils.AssertEqual(t, nil, err)
 	defer conn.Close()
@@ -396,9 +397,9 @@ func TestHandler(t *testing.T) {
 	}
 	v, err := json.Marshal(data)
 	utils.AssertEqual(t, nil, err)
-	log.Printf("will write json\n")
+	log.Debug("will write json\n")
 	err = conn.WriteJSON(v)
-	log.Printf("finished write json\n")
+	log.Debug("finished write json\n")
 	utils.AssertEqual(t, nil, err)
 }
 

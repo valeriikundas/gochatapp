@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"log"
+
 	"net/http"
 	"net/http/httptest"
 	"os/exec"
@@ -12,6 +12,7 @@ import (
 	"testing"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/log"
 	"github.com/gofiber/fiber/v2/utils"
 	"gorm.io/gorm"
 )
@@ -60,7 +61,7 @@ func prepareTestDb(t *testing.T, config *Config) (*gorm.DB, func(*gorm.DB) error
 
 	err := clearDB(db)
 	if err != nil {
-		log.Printf("dropdb failed %v\n", err)
+		log.Warnf("dropdb failed %w\n", err)
 	}
 
 	return db, clearDB
@@ -68,7 +69,7 @@ func prepareTestDb(t *testing.T, config *Config) (*gorm.DB, func(*gorm.DB) error
 
 func CreateDBCommand() *exec.Cmd {
 	createCommand := fmt.Sprintf("createdb --host %s --port %d --user %s %s", "0.0.0.0", 5432, "valerii", "chatapp_test")
-	log.Println(createCommand)
+	log.Debugf(createCommand)
 	createCommandSplit := strings.Split(createCommand, " ")
 	createCmd := exec.Command(createCommandSplit[0], createCommandSplit[1:]...)
 	return createCmd
@@ -78,7 +79,7 @@ func DropDBCommand() *exec.Cmd {
 	command := "dropdb --host 0.0.0.0 --port 5432 --user valerii chatapp_test"
 	commandSplit := strings.Split(command, " ")
 	cmd := exec.Command(commandSplit[0], commandSplit[1:]...)
-	log.Println(cmd)
+	log.Debug(cmd)
 	return cmd
 }
 

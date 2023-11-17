@@ -3,10 +3,10 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/log"
 	"github.com/gofiber/fiber/v2/middleware/session"
 	"github.com/pkg/errors"
 	"gorm.io/gorm"
@@ -617,7 +617,7 @@ func UploadUserAvatar(c *fiber.Ctx) error {
 	filePath := fmt.Sprintf("uploads/%s", fileName)
 	err = c.SaveFile(file, filePath)
 	if err != nil {
-		log.Printf("err=%v\n", err)
+		log.Errorf("err=%v\n", err)
 		return err
 	}
 

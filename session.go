@@ -2,9 +2,9 @@ package main
 
 import (
 	"encoding/json"
-	"log"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/log"
 	"github.com/gofiber/fiber/v2/middleware/session"
 	"github.com/pkg/errors"
 )
@@ -22,7 +22,7 @@ var SessionIDCookieKey = "session_id"
 func getLoggedInUser(c *fiber.Ctx) (*SessionCurrentUser, error) {
 	store, ok := c.Locals("store").(*session.Store)
 	if !ok {
-		log.Fatalln("error getting `store` from c.Locals()")
+		log.Fatal("error getting `store` from c.Locals()\n")
 	}
 
 	session, err := store.Get(c)

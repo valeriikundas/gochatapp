@@ -3,8 +3,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	"io"
-	"os"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
@@ -32,8 +30,6 @@ func connectDatabase(DSN string) *gorm.DB {
 }
 
 func createApp(pgDB *gorm.DB, redisDB *redis.Storage) *fiber.App {
-	setupLogger()
-
 	htmlEngine := html.New("templates/", ".html")
 
 	// TODO: will use django engine for new templates likely
@@ -79,18 +75,6 @@ func createApp(pgDB *gorm.DB, redisDB *redis.Storage) *fiber.App {
 	setupRoutes(app)
 
 	return app
-}
-
-func setupLogger() log.AllLogger {
-	logger := log.DefaultLogger()
-
-	logFile, err := os.OpenFile("test.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
-	if err != nil {
-		panic(err)
-	}
-	logWriter := io.MultiWriter(os.Stdout, logFile)
-	logger.SetOutput(logWriter)
-	return logger
 }
 
 func isTesting() bool {
