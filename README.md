@@ -13,6 +13,7 @@
   - [ ] fly.io ?
     - [ ] https://www.convictional.com/blog/go-embed
   - [ ] https://github.com/klothoplatform/klotho
+- [ ] pack templates/ to go binary      
 - [ ] use fiber auth middleware https://docs.gofiber.io/api/middleware/basicauth
 - [ ] add auth https://medium.com/@abhinavv.singh/a-comprehensive-guide-to-authentication-and-authorization-in-go-golang-6f783b4cea18
 - [ ] use JWT tokens
