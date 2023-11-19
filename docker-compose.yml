@@ -3,7 +3,7 @@ services:
   backend:
     build:
       context: .
-      dockerfile: prod.Dockerfile
+      dockerfile: dev.Dockerfile
     ports:
       - "3000:3000"
     volumes:
@@ -37,6 +37,12 @@ services:
       - POSTGRES_PASSWORD=super-secret-password
     networks:
       - network_db
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5432"]
+      interval: 5m
+      timeout: 10s
+      retries: 3
+      start_period: 10s
 
 networks:
   network_db:

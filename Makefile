@@ -1,3 +1,9 @@
+setup:
+	docker-compose up -d redis postgres
+
+dev:
+	air
+
 run:
 	go run .
 
