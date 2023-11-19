@@ -521,8 +521,8 @@ func TestUserChatsView(t *testing.T) {
 	b, err := io.ReadAll(resp.Body)
 	utils.AssertEqual(t, nil, err)
 
-	cnt := strings.Count(string(b), "chat-row")
-	utils.AssertEqual(t, chatsCount, cnt)
+	html := string(b)
+	utils.AssertEqual(t, chatsCount, strings.Count(html, "chat-row"))
 }
 
 func TestUserView(t *testing.T) {

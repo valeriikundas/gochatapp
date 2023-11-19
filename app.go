@@ -14,14 +14,15 @@ func main() {
 	// FIXME: write test for `main` function
 	// FIXME: make it enum
 	envOptions := []string{"dev", "docker", "test", "prod"}
-	env := flag.String("config", "prod", fmt.Sprintf("What config to use. Options are %v", envOptions))
+	env := flag.String("config", "dev", fmt.Sprintf("What config to use. Options are %v", envOptions))
 	shouldGenerateChats := flag.Bool("generateChats", false, "Should generate chats?")
 	flag.Parse()
 
-	slog.Info("initial read env", "env", env)
 	if env == nil {
 		*env = "prod"
 	}
+	slog.Info("initial read env", "env", *env)
+
 	if !contains(envOptions, env) {
 		panic(fmt.Errorf("unknown env: %v", env))
 	}

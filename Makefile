@@ -1,7 +1,7 @@
 setup:
 	docker-compose up -d redis postgres
 
-dev:
+dev: setup
 	air
 
 run:
@@ -31,8 +31,8 @@ redis-cli:
 test-docker:
 	# FIXME: check that database is ready
 	docker-compose up -d redis postgres
-	docker-compose exec postgres dropdb --user postgres --if-exists chatapp_test
-	docker-compose exec postgres createdb --user postgres chatapp_test
+	docker-compose exec -d postgres dropdb --user postgres --if-exists chatapp_test
+	docker-compose exec -d postgres createdb --user postgres chatapp_test
 	make test
 	docker-compose down redis postgres
 

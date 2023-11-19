@@ -125,7 +125,13 @@ func generateRandomChats(t *testing.T, db *gorm.DB) error {
 	// TODO: refactor to focused functions
 
 	users, err := addRandomUsers(db, 100)
-	utils.AssertEqual(t, nil, err)
+	if t != nil {
+		utils.AssertEqual(t, nil, err)
+	} else {
+		if err != nil {
+			return err
+		}
+	}
 
 	k := 100
 	chatData := make([]Chat, k)

@@ -1,8 +1,10 @@
 package main
 
 import (
+	"embed"
 	"flag"
 	"fmt"
+	"net/http"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
@@ -29,16 +31,16 @@ func connectDatabase(DSN string) *gorm.DB {
 	return db
 }
 
-func createApp(pgDB *gorm.DB, redisDB *redis.Storage) *fiber.App {
-	htmlEngine := html.New("templates/", ".html")
+//go:embed templates/*
+var templatesFS embed.FS
 
-	// TODO: will use django engine for new templates likely
-	// djangoEngine := django.New("templates/django/", ".html")
+func createApp(pgDB *gorm.DB, redisDB *redis.Storage) *fiber.App {
+	htmlEngine := html.NewFileSystem(http.FS(templatesFS), ".html")
 
 	app := fiber.New(fiber.Config{
 		AppName:     "GoChatApp",
 		Views:       htmlEngine,
-		ViewsLayout: "layouts/base",
+		ViewsLayout: "templates/layouts/base",
 		ErrorHandler: func(c *fiber.Ctx, err error) error {
 			log.Errorf("global error = %v\n", err.Error())
 			return c.Status(fiber.StatusBadRequest).JSON(GlobalErrorHandlerResponse{

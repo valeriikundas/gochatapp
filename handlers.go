@@ -45,7 +45,7 @@ func AllChatsView(c *fiber.Ctx) error {
 		}
 	}
 
-	return c.Render("chats", fiber.Map{
+	return c.Render("templates/chats", fiber.Map{
 		"Chats":       chats,
 		"Mode":        "all",
 		"CurrentUser": user,
@@ -73,7 +73,7 @@ func UserChatsView(c *fiber.Ctx) error {
 
 	userChats := user.Chats
 
-	return c.Render("chats", fiber.Map{
+	return c.Render("templates/chats", fiber.Map{
 		"Chats":       userChats,
 		"Mode":        "joined",
 		"CurrentUser": *sessionCurrentUser,
@@ -99,7 +99,7 @@ func UsersView(c *fiber.Ctx) error {
 		}
 	}
 
-	return c.Render("users", fiber.Map{
+	return c.Render("templates/users", fiber.Map{
 		"Users":       users,
 		"CurrentUser": sessionCurrentUser,
 	})
@@ -122,7 +122,7 @@ func UserView(c *fiber.Ctx) error {
 		return tx.Error
 	}
 
-	return c.Render("user", fiber.Map{
+	return c.Render("templates/user", fiber.Map{
 		"User": user,
 	})
 }
@@ -173,7 +173,7 @@ func ChatView(c *fiber.Ctx) error {
 	// FIXME: if I pass `User` but with other fields and `layout` present, it
 	// does not throw an error, but it should. needs deeper look into fiber
 	// source code
-	return c.Render("chat", fiber.Map{
+	return c.Render("templates/chat", fiber.Map{
 		"Chat":        chat,
 		"CurrentUser": user,
 	})
@@ -226,7 +226,7 @@ func HomeView(c *fiber.Ctx) error {
 		}
 	}
 
-	return c.Render("home", fiber.Map{
+	return c.Render("templates/home", fiber.Map{
 		"CurrentUser": currentUser,
 	})
 }
@@ -503,7 +503,7 @@ func RootHandler(c *fiber.Ctx) error {
 }
 
 func LoginView(c *fiber.Ctx) error {
-	return c.Render("login", fiber.Map{})
+	return c.Render("templates/login", fiber.Map{})
 }
 
 type UserAuthSchema struct {
@@ -559,7 +559,7 @@ func PostLoginView(c *fiber.Ctx) error {
 		return err
 	}
 
-	return c.Render("home", fiber.Map{
+	return c.Render("templates/home", fiber.Map{
 		"CurrentUser": user,
 	})
 }
@@ -593,7 +593,7 @@ func handleNewUserLogin(c *fiber.Ctx, db *gorm.DB, session *session.Session, dat
 		return err
 	}
 
-	return c.Render("home", fiber.Map{
+	return c.Render("templates/home", fiber.Map{
 		"CurrentUser": createdUser,
 	})
 }
